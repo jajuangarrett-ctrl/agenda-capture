@@ -1,0 +1,19 @@
+.agenda-roster-list {
+  margin: 12px 0 18px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.agenda-roster-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.agenda-roster-empty,
+.agenda-empty-roster {
+  color: var(--text-muted);
+  margin: 12px 0;
+}
