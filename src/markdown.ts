@@ -8,10 +8,12 @@ export function formatDateHeading(d: Date): string {
 }
 
 export function renderBullet(item: AgendaItem): string {
-  const tagPart = item.hashtag
-    ? ` ${item.hashtag.startsWith("#") ? item.hashtag : `#${item.hashtag}`}`
-    : "";
-  return `- [ ] ${item.text}${tagPart} [${item.priority}]\n`;
+  const tags = ["#agenda"];
+  if (item.hashtag) {
+    const extra = item.hashtag.startsWith("#") ? item.hashtag : `#${item.hashtag}`;
+    if (extra.toLowerCase() !== "#agenda") tags.push(extra);
+  }
+  return `- [ ] ${item.text} ${tags.join(" ")} [${item.priority}]\n`;
 }
 
 export function insertBulletUnderHeading(
