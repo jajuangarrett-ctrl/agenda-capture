@@ -20,7 +20,7 @@ export function insertBulletUnderHeading(
   bullet: string
 ): string {
   // Match `## MMDDYY` as its own line. Reject `### MMDDYY` and `## MMDDYY-extra`.
-  const headingPattern = new RegExp(`^## ${heading}\\s*$`, "m");
+  const headingPattern = new RegExp(`^## ${heading}[ \\t]*$`, "m");
   const match = headingPattern.exec(current);
   if (match) {
     const headingEnd = match.index + match[0].length;
