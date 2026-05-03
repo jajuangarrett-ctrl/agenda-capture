@@ -13,6 +13,10 @@ export default class AgendaCapturePlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
+    this.addRibbonIcon("microphone", "Capture agenda item", () => {
+      new CaptureModal(this.app, this).open();
+    });
+
     this.addCommand({
       id: "capture",
       name: "Capture agenda item",
