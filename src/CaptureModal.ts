@@ -1,6 +1,12 @@
-import { App, Modal, Notice, Setting } from "obsidian";
+import { App, ButtonComponent, Modal, Notice, Setting } from "obsidian";
 import { loadRoster } from "./roster";
 import { appendAgendaItem } from "./append";
+import {
+  cleanupTranscript,
+  startRecording,
+  transcribeWhisper,
+  type VoiceRecorder,
+} from "./transcribe";
 import type { Priority } from "./types";
 import type AgendaCapturePlugin from "../main";
 
@@ -10,6 +16,12 @@ export class CaptureModal extends Modal {
   private text = "";
   private priority: Priority = "Standard";
   private hashtag = "";
+
+  private textArea: HTMLTextAreaElement | null = null;
+  private recordButton: ButtonComponent | null = null;
+  private recorder: VoiceRecorder | null = null;
+  private recording = false;
+  private busy = false;
 
   constructor(app: App, plugin: AgendaCapturePlugin) {
     super(app);
@@ -47,17 +59,23 @@ export class CaptureModal extends Modal {
       });
     });
 
-    let textArea: HTMLTextAreaElement | null = null;
     new Setting(contentEl)
       .setName("Item")
-      .setDesc("Use the keyboard mic to dictate, or type. Voice cleanup pipeline arrives Day 4.")
+      .setDesc("Tap Record to dictate, or type below. Cleanup runs automatically when both API keys are set.")
       .addTextArea((t) => {
-        textArea = t.inputEl;
+        this.textArea = t.inputEl;
         t.inputEl.rows = 4;
         t.inputEl.style.width = "100%";
         t.onChange((v) => {
           this.text = v;
         });
+      });
+
+    new Setting(contentEl)
+      .setName("Voice capture")
+      .addButton((b) => {
+        this.recordButton = b;
+        b.setButtonText("Record").onClick(() => this.toggleRecord());
       });
 
     new Setting(contentEl).setName("Priority").addDropdown((d) => {
@@ -87,10 +105,76 @@ export class CaptureModal extends Modal {
         b.setButtonText("Save & capture another").onClick(() => this.save(true))
       );
 
-    setTimeout(() => textArea?.focus(), 0);
+    setTimeout(() => this.textArea?.focus(), 0);
+  }
+
+  private async toggleRecord() {
+    if (this.busy || !this.recordButton) return;
+
+    if (!this.recording) {
+      if (!this.plugin.settings.openaiApiKey) {
+        new Notice("Add your OpenAI API key in plugin settings before recording.");
+        return;
+      }
+      try {
+        this.recorder = await startRecording();
+        this.recording = true;
+        this.recordButton.setButtonText("Stop");
+        this.recordButton.setWarning();
+      } catch (e) {
+        new Notice(`Microphone error: ${e instanceof Error ? e.message : String(e)}`);
+      }
+      return;
+    }
+
+    this.recording = false;
+    this.busy = true;
+    this.recordButton.setDisabled(true);
+    this.recordButton.removeCta();
+    this.recordButton.setButtonText("Transcribing...");
+
+    try {
+      const audio = await this.recorder!.stop();
+      let transcript = await transcribeWhisper(
+        audio,
+        this.plugin.settings.openaiApiKey
+      );
+
+      if (this.plugin.settings.anthropicApiKey && transcript) {
+        this.recordButton.setButtonText("Cleaning up...");
+        const roster = await loadRoster(this.app, this.plugin.settings.vaultSubfolder);
+        transcript = await cleanupTranscript(
+          transcript,
+          this.plugin.settings.anthropicApiKey,
+          {
+            rosterNames: roster.members,
+            acronyms: this.plugin.settings.customAcronyms,
+          }
+        );
+      }
+
+      this.text = mergeTranscript(this.text, transcript);
+      if (this.textArea) {
+        this.textArea.value = this.text;
+        this.textArea.focus();
+      }
+    } catch (e) {
+      new Notice(`Voice capture failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      this.busy = false;
+      this.recorder = null;
+      if (this.recordButton) {
+        this.recordButton.setDisabled(false);
+        this.recordButton.setButtonText("Record");
+      }
+    }
   }
 
   private async save(forceAnother: boolean) {
+    if (this.busy) {
+      new Notice("Voice capture still running.");
+      return;
+    }
     const text = this.text.trim();
     if (!text) {
       new Notice("Add some text before saving.");
@@ -122,6 +206,18 @@ export class CaptureModal extends Modal {
   }
 
   onClose() {
+    if (this.recorder) {
+      this.recorder.cancel();
+      this.recorder = null;
+    }
     this.contentEl.empty();
   }
+}
+
+function mergeTranscript(existing: string, addition: string): string {
+  const a = existing.trim();
+  const b = addition.trim();
+  if (!a) return b;
+  if (!b) return a;
+  return `${a} ${b}`;
 }
