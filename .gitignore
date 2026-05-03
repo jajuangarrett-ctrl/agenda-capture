@@ -1,0 +1,9 @@
+node_modules/
+main.js
+*.js.map
+data.json
+.env
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,10 @@
+{
+  "id": "agenda-capture",
+  "name": "Agenda Capture",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "Quick voice/text capture of agenda items into per-team-member markdown files.",
+  "author": "Franklin Garrett",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}

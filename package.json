@@ -1,0 +1,23 @@
+{
+  "name": "agenda-capture",
+  "version": "0.1.0",
+  "description": "Quick voice/text capture of agenda items into per-team-member markdown files.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "test": "vitest run"
+  },
+  "keywords": ["obsidian-plugin", "obsidian", "agenda", "capture"],
+  "author": "Franklin Garrett",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "builtin-modules": "3.3.0",
+    "esbuild": "0.20.2",
+    "obsidian": "latest",
+    "tslib": "2.6.2",
+    "typescript": "5.4.5",
+    "vitest": "^1.6.0"
+  }
+}
