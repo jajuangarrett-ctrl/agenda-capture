@@ -13,7 +13,8 @@ export function renderBullet(item: AgendaItem): string {
     const extra = item.hashtag.startsWith("#") ? item.hashtag : `#${item.hashtag}`;
     if (extra.toLowerCase() !== "#agenda") tags.push(extra);
   }
-  return `- [ ] ${item.text} ${tags.join(" ")} [${item.priority}]\n`;
+  tags.push(`#${item.priority.replace(/\s+/g, "")}`);
+  return `- [ ] ${item.text} ${tags.join(" ")}\n`;
 }
 
 export function insertBulletUnderHeading(

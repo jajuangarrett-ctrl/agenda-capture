@@ -24,30 +24,30 @@ describe("renderBullet", () => {
     priority: "Standard",
   };
 
-  it("auto-tags with #agenda when no extra hashtag", () => {
-    expect(renderBullet(base)).toBe("- [ ] Discuss intake numbers #agenda [Standard]\n");
+  it("auto-tags with #agenda and #Standard priority", () => {
+    expect(renderBullet(base)).toBe("- [ ] Discuss intake numbers #agenda #Standard\n");
   });
-  it("appends extra hashtag (with leading #) after #agenda", () => {
+  it("appends extra hashtag (with leading #) between #agenda and priority", () => {
     expect(renderBullet({ ...base, hashtag: "#followup" })).toBe(
-      "- [ ] Discuss intake numbers #agenda #followup [Standard]\n"
+      "- [ ] Discuss intake numbers #agenda #followup #Standard\n"
     );
   });
-  it("appends extra hashtag (no leading #) after #agenda", () => {
+  it("appends extra hashtag (no leading #) between #agenda and priority", () => {
     expect(renderBullet({ ...base, hashtag: "followup" })).toBe(
-      "- [ ] Discuss intake numbers #agenda #followup [Standard]\n"
+      "- [ ] Discuss intake numbers #agenda #followup #Standard\n"
     );
   });
   it("does not duplicate #agenda when user supplies it", () => {
     expect(renderBullet({ ...base, hashtag: "agenda" })).toBe(
-      "- [ ] Discuss intake numbers #agenda [Standard]\n"
+      "- [ ] Discuss intake numbers #agenda #Standard\n"
     );
     expect(renderBullet({ ...base, hashtag: "#Agenda" })).toBe(
-      "- [ ] Discuss intake numbers #agenda [Standard]\n"
+      "- [ ] Discuss intake numbers #agenda #Standard\n"
     );
   });
-  it("renders High Impact priority with #agenda", () => {
+  it("renders High Impact priority as #HighImpact (no space)", () => {
     expect(renderBullet({ ...base, priority: "High Impact" })).toBe(
-      "- [ ] Discuss intake numbers #agenda [High Impact]\n"
+      "- [ ] Discuss intake numbers #agenda #HighImpact\n"
     );
   });
 });
