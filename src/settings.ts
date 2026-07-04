@@ -6,6 +6,7 @@ export interface AgendaCaptureSettings {
   anthropicApiKey: string;
   vaultSubfolder: string;
   showAnotherAfterSave: boolean;
+  openSavedFileAfterSave: boolean;
   lastUsedTeamMember: string;
   customAcronyms: string;
 }
@@ -15,6 +16,7 @@ export const DEFAULT_SETTINGS: AgendaCaptureSettings = {
   anthropicApiKey: "",
   vaultSubfolder: "05 People/Agenda Items",
   showAnotherAfterSave: true,
+  openSavedFileAfterSave: true,
   lastUsedTeamMember: "",
   customAcronyms: "CalWORKs, VPSS, FJG",
 };
@@ -52,6 +54,16 @@ export class AgendaCaptureSettingTab extends PluginSettingTab {
       .addToggle((t) =>
         t.setValue(this.plugin.settings.showAnotherAfterSave).onChange(async (v) => {
           this.plugin.settings.showAnotherAfterSave = v;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Open saved file after save")
+      .setDesc("After saving an agenda item, open the exact team agenda file that was changed.")
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.openSavedFileAfterSave).onChange(async (v) => {
+          this.plugin.settings.openSavedFileAfterSave = v;
           await this.plugin.saveSettings();
         })
       );

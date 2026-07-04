@@ -1,4 +1,4 @@
-import { App, ButtonComponent, Modal, Notice, Setting } from "obsidian";
+import { App, ButtonComponent, Modal, Notice, Setting, TFile } from "obsidian";
 import { loadRoster } from "./roster";
 import { appendAgendaItem } from "./append";
 import {
@@ -181,8 +181,9 @@ export class CaptureModal extends Modal {
       return;
     }
 
+    let savedPath: string;
     try {
-      await appendAgendaItem(this.app, this.plugin.settings.vaultSubfolder, {
+      savedPath = await appendAgendaItem(this.app, this.plugin.settings.vaultSubfolder, {
         team: this.team,
         text,
         priority: this.priority,
@@ -196,13 +197,22 @@ export class CaptureModal extends Modal {
     this.plugin.settings.lastUsedTeamMember = this.team;
     await this.plugin.saveSettings();
 
-    new Notice(`Saved to ${this.team}.md`);
+    new Notice(`Saved to ${savedPath}.`);
 
     const reopen = forceAnother || this.plugin.settings.showAnotherAfterSave;
     this.close();
+    if (this.plugin.settings.openSavedFileAfterSave) {
+      await this.openSavedFile(savedPath);
+    }
     if (reopen) {
       setTimeout(() => new CaptureModal(this.app, this.plugin).open(), 200);
     }
+  }
+
+  private async openSavedFile(path: string): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) return;
+    await this.app.workspace.getLeaf(false).openFile(file);
   }
 
   onClose() {
