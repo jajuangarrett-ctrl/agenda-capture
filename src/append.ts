@@ -8,7 +8,7 @@ export async function appendAgendaItem(
   subfolder: string,
   item: AgendaItem,
   today: Date = new Date()
-): Promise<void> {
+): Promise<string> {
   await ensureFolder(app, subfolder);
   const path = normalizePath(`${subfolder}/${item.team}.md`);
   const heading = formatDateHeading(today);
@@ -19,7 +19,9 @@ export async function appendAgendaItem(
     const current = await app.vault.read(file);
     const next = insertBulletUnderHeading(current, heading, bullet);
     await app.vault.modify(file, next);
+    return path;
   } else {
     await app.vault.create(path, `## ${heading}\n${bullet}`);
+    return path;
   }
 }
