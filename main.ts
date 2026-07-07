@@ -23,6 +23,10 @@ export default class AgendaCapturePlugin extends Plugin {
       callback: () => new CaptureModal(this.app, this).open(),
     });
 
+    this.registerObsidianProtocolHandler("agenda-capture", () => {
+      new CaptureModal(this.app, this).open();
+    });
+
     this.addCommand({
       id: "manage-roster",
       name: "Manage agenda roster",
