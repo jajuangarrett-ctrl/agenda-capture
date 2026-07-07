@@ -12,20 +12,17 @@ export default class AgendaCapturePlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
+    const openCapture = () => new CaptureModal(this.app, this).open();
 
-    this.addRibbonIcon("microphone", "Capture agenda item", () => {
-      new CaptureModal(this.app, this).open();
-    });
+    this.addRibbonIcon("microphone", "Capture agenda item", openCapture);
 
     this.addCommand({
       id: "capture",
       name: "Capture agenda item",
-      callback: () => new CaptureModal(this.app, this).open(),
+      callback: openCapture,
     });
 
-    this.registerObsidianProtocolHandler("agenda-capture", () => {
-      new CaptureModal(this.app, this).open();
-    });
+    this.registerObsidianProtocolHandler("agenda-capture", openCapture);
 
     this.addCommand({
       id: "manage-roster",
@@ -33,7 +30,18 @@ export default class AgendaCapturePlugin extends Plugin {
       callback: () => new RosterModal(this.app, this.settings.vaultSubfolder).open(),
     });
 
+    this.app.workspace.onLayoutReady(() => {
+      this.recoverMissedAdvancedUriLaunch(openCapture);
+    });
+
     this.addSettingTab(new AgendaCaptureSettingTab(this.app, this));
+  }
+
+  private recoverMissedAdvancedUriLaunch(openCapture: () => void) {
+    const advancedUri = (this.app as any).plugins?.getPlugin?.("obsidian-advanced-uri");
+    if (advancedUri?.lastParameters?.commandid === `${this.manifest.id}:capture`) {
+      setTimeout(openCapture, 250);
+    }
   }
 
   async loadSettings() {

@@ -1,6 +1,6 @@
 {
   "name": "agenda-capture",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Quick voice/text capture of agenda items into per-team-member markdown files.",
   "main": "main.js",
   "scripts": {
