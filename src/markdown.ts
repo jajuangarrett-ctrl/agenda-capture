@@ -29,6 +29,6 @@ function splitFrontmatter(content: string): { frontmatter: string; body: string 
 
 function stripLegacyDateHeadings(body: string): string {
   return body
-    .replace(/^## \d{6}[ \t]*\n?/gm, "")
+    .replace(/^## \d{6}[ \t]*(?:\n|$)/gm, "")
     .replace(/\n{3,}/g, "\n\n");
 }
