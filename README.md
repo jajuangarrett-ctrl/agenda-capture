@@ -2,7 +2,7 @@
 
 Quick voice/text capture of agenda items into per-team-member markdown files in your Obsidian vault.
 
-Each captured item lands as a checkbox bullet under today's `## MMDDYY` heading in `<vault>/05 People/Agenda Items/<TeamMember>.md`. The `[ ]` checkbox represents *whether the item has been shared with the team member yet*, not completion. Same-day captures append under the existing date heading; new days create a new heading.
+Each captured item lands as a checkbox bullet under today's `## MMDDYY` heading in `<vault>/05 People/Agenda Items/<TeamMember>.md`. The `[ ]` checkbox represents *whether the item has been shared with the team member yet*, not completion. New captures are inserted at the top: same-day items go first beneath today's heading, and a new day's heading goes above older dates.
 
 ## Commands
 

@@ -31,7 +31,28 @@ export function insertBulletUnderHeading(
     return current.slice(0, insertAt) + bullet + current.slice(insertAt);
   }
 
-  const trimmed = current.replace(/\s+$/, "");
-  const separator = trimmed.length > 0 ? "\n\n" : "";
-  return `${trimmed}${separator}## ${heading}\n${bullet}`;
+  return insertNewHeadingAtTop(current, heading, bullet);
+}
+
+function insertNewHeadingAtTop(
+  current: string,
+  heading: string,
+  bullet: string
+): string {
+  const block = `## ${heading}\n${bullet}`;
+  const frontmatter = current.match(
+    /^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?=\r?\n|$)/
+  );
+
+  if (frontmatter) {
+    const remainder = current
+      .slice(frontmatter[0].length)
+      .replace(/^(?:\r?\n)+/, "");
+    return remainder
+      ? `${frontmatter[0]}\n\n${block}\n${remainder}`
+      : `${frontmatter[0]}\n\n${block}`;
+  }
+
+  const remainder = current.replace(/^(?:\r?\n)+/, "");
+  return remainder ? `${block}\n${remainder}` : block;
 }

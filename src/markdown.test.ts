@@ -62,10 +62,10 @@ describe("insertBulletUnderHeading", () => {
     );
   });
 
-  it("appends new heading when file has content but no headings", () => {
+  it("inserts a new heading above content when the file has no date headings", () => {
     const current = "Some preamble text.\n";
     expect(insertBulletUnderHeading(current, heading, bullet)).toBe(
-      `Some preamble text.\n\n## ${heading}\n${bullet}`
+      `## ${heading}\n${bullet}\nSome preamble text.\n`
     );
   });
 
@@ -76,10 +76,10 @@ describe("insertBulletUnderHeading", () => {
     );
   });
 
-  it("appends new today heading when only an older heading exists", () => {
+  it("inserts a new today heading above older headings", () => {
     const older = "## 050226\n- [ ] yesterday item [Standard]\n";
     expect(insertBulletUnderHeading(older, heading, bullet)).toBe(
-      `## 050226\n- [ ] yesterday item [Standard]\n\n## ${heading}\n${bullet}`
+      `## ${heading}\n${bullet}\n## 050226\n- [ ] yesterday item [Standard]\n`
     );
   });
 
@@ -98,21 +98,21 @@ describe("insertBulletUnderHeading", () => {
   it("does NOT match a longer date prefix like ## 0503261", () => {
     const current = `## ${heading}1\n- [ ] mismatched [Standard]\n`;
     expect(insertBulletUnderHeading(current, heading, bullet)).toBe(
-      `## ${heading}1\n- [ ] mismatched [Standard]\n\n## ${heading}\n${bullet}`
+      `## ${heading}\n${bullet}\n## ${heading}1\n- [ ] mismatched [Standard]\n`
     );
   });
 
   it("does NOT match a different heading level like ### MMDDYY", () => {
     const current = `### ${heading}\n- [ ] sub [Standard]\n`;
     expect(insertBulletUnderHeading(current, heading, bullet)).toBe(
-      `### ${heading}\n- [ ] sub [Standard]\n\n## ${heading}\n${bullet}`
+      `## ${heading}\n${bullet}\n### ${heading}\n- [ ] sub [Standard]\n`
     );
   });
 
-  it("preserves frontmatter when appending", () => {
+  it("preserves frontmatter above a new top date heading", () => {
     const current = "---\ntags: [team]\n---\n\n## 050226\n- [ ] yesterday [Standard]\n";
     expect(insertBulletUnderHeading(current, heading, bullet)).toBe(
-      `---\ntags: [team]\n---\n\n## 050226\n- [ ] yesterday [Standard]\n\n## ${heading}\n${bullet}`
+      `---\ntags: [team]\n---\n\n## ${heading}\n${bullet}\n## 050226\n- [ ] yesterday [Standard]\n`
     );
   });
 });
