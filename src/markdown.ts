@@ -1,12 +1,5 @@
 import type { AgendaItem } from "./types";
 
-export function formatDateHeading(d: Date): string {
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const yy = String(d.getFullYear() % 100).padStart(2, "0");
-  return `${mm}${dd}${yy}`;
-}
-
 export function renderBullet(item: AgendaItem): string {
   const tags = ["#agenda"];
   if (item.hashtag) {
@@ -17,42 +10,25 @@ export function renderBullet(item: AgendaItem): string {
   return `- [ ] ${item.text} ${tags.join(" ")}\n`;
 }
 
-export function insertBulletUnderHeading(
-  current: string,
-  heading: string,
-  bullet: string
-): string {
-  // Match `## MMDDYY` as its own line. Reject `### MMDDYY` and `## MMDDYY-extra`.
-  const headingPattern = new RegExp(`^## ${heading}[ \\t]*$`, "m");
-  const match = headingPattern.exec(current);
-  if (match) {
-    const headingEnd = match.index + match[0].length;
-    const insertAt = current.charAt(headingEnd) === "\n" ? headingEnd + 1 : headingEnd;
-    return current.slice(0, insertAt) + bullet + current.slice(insertAt);
-  }
+export function insertBulletAtTop(current: string, bullet: string): string {
+  const normalized = current.replace(/\r\n?/g, "\n");
+  const { frontmatter, body } = splitFrontmatter(normalized);
+  const runningList = stripLegacyDateHeadings(body).replace(/^\n+/, "");
+  const newBullet = `${bullet.replace(/\n+$/, "")}\n`;
+  const nextBody = `${newBullet}${runningList}`;
 
-  return insertNewHeadingAtTop(current, heading, bullet);
+  if (!frontmatter) return nextBody;
+  return `${frontmatter.replace(/\n+$/, "")}\n\n${nextBody}`;
 }
 
-function insertNewHeadingAtTop(
-  current: string,
-  heading: string,
-  bullet: string
-): string {
-  const block = `## ${heading}\n${bullet}`;
-  const frontmatter = current.match(
-    /^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?=\r?\n|$)/
-  );
+function splitFrontmatter(content: string): { frontmatter: string; body: string } {
+  const match = content.match(/^---\n[\s\S]*?\n---\n?/);
+  if (!match) return { frontmatter: "", body: content };
+  return { frontmatter: match[0], body: content.slice(match[0].length) };
+}
 
-  if (frontmatter) {
-    const remainder = current
-      .slice(frontmatter[0].length)
-      .replace(/^(?:\r?\n)+/, "");
-    return remainder
-      ? `${frontmatter[0]}\n\n${block}\n${remainder}`
-      : `${frontmatter[0]}\n\n${block}`;
-  }
-
-  const remainder = current.replace(/^(?:\r?\n)+/, "");
-  return remainder ? `${block}\n${remainder}` : block;
+function stripLegacyDateHeadings(body: string): string {
+  return body
+    .replace(/^## \d{6}[ \t]*\n?/gm, "")
+    .replace(/\n{3,}/g, "\n\n");
 }
