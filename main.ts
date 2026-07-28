@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { Notice, Plugin, TFile } from "obsidian";
 import {
   AgendaCaptureSettings,
   AgendaCaptureSettingTab,
@@ -6,6 +6,9 @@ import {
 } from "./src/settings";
 import { CaptureModal } from "./src/CaptureModal";
 import { RosterModal } from "./src/RosterModal";
+import { appendAgendaItem } from "./src/append";
+import { parseAgendaClipperPayload } from "./src/clipper";
+import { loadRoster } from "./src/roster";
 
 export default class AgendaCapturePlugin extends Plugin {
   settings: AgendaCaptureSettings = DEFAULT_SETTINGS;
@@ -23,6 +26,9 @@ export default class AgendaCapturePlugin extends Plugin {
     });
 
     this.registerObsidianProtocolHandler("agenda-capture", openCapture);
+    this.registerObsidianProtocolHandler("fjg-agenda-clipper", async (params) => {
+      await this.handleAgendaClipper(params);
+    });
 
     this.addCommand({
       id: "manage-roster",
@@ -50,5 +56,35 @@ export default class AgendaCapturePlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+
+  private async handleAgendaClipper(params: Record<string, string>) {
+    try {
+      const roster = await loadRoster(this.app, this.settings.vaultSubfolder);
+      const item = parseAgendaClipperPayload(
+        String(params.payload || ""),
+        roster.members
+      );
+      const savedPath = await appendAgendaItem(
+        this.app,
+        this.settings.vaultSubfolder,
+        item
+      );
+
+      this.settings.lastUsedTeamMember = item.team;
+      await this.saveSettings();
+      new Notice(`Agenda item saved for ${item.team}.`);
+
+      if (this.settings.openSavedFileAfterSave) {
+        const file = this.app.vault.getAbstractFileByPath(savedPath);
+        if (file instanceof TFile) {
+          await this.app.workspace.getLeaf(false).openFile(file);
+        }
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      new Notice(`Agenda clip failed: ${message}`, 10000);
+      console.error("[Agenda Capture clipper]", error);
+    }
   }
 }

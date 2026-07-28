@@ -4,10 +4,22 @@ Quick voice/text capture of agenda items into per-team-member markdown files in 
 
 Each captured item lands as a checkbox bullet at the top of `<vault>/05 People/Agenda Items/<TeamMember>.md`. The `[ ]` checkbox represents *whether the item has been shared with the team member yet*, not completion. Capture dates and date headings are deliberately omitted, leaving one newest-first running list per team member.
 
+Version 0.3.0 also receives agenda items from the separate
+[FJG Obsidian Agenda Clipper](https://github.com/jajuangarrett-ctrl/obsidian-agenda-clipper)
+Chrome extension through the `obsidian://fjg-agenda-clipper` protocol.
+
 ## Commands
 
 - **Capture agenda item** — opens the capture modal (also available via the microphone ribbon icon)
 - **Manage agenda roster** — add or remove team members
+
+## Chrome agenda clipper
+
+The Chrome extension sends only a versioned agenda payload: team member, item
+text, priority, and optional hashtag. This plugin remains authoritative for the
+destination folder, roster, filename, Markdown format, and newest-first
+insertion. Incoming team members must exactly match `_roster.json`; Chrome
+cannot choose an arbitrary vault path.
 
 ## Vault layout
 
