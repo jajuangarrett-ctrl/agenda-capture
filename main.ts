@@ -8,6 +8,7 @@ import { CaptureModal } from "./src/CaptureModal";
 import { RosterModal } from "./src/RosterModal";
 import { appendAgendaItem } from "./src/append";
 import { parseAgendaClipperPayload } from "./src/clipper";
+import { publishAgendaCenter } from "./src/publish";
 import { loadRoster } from "./src/roster";
 
 export default class AgendaCapturePlugin extends Plugin {
@@ -34,6 +35,37 @@ export default class AgendaCapturePlugin extends Plugin {
       id: "manage-roster",
       name: "Manage agenda roster",
       callback: () => new RosterModal(this.app, this.settings.vaultSubfolder).open(),
+    });
+
+    const publishAgendas = async () => {
+      try {
+        if (!this.settings.agendaPublishEndpoint || !this.settings.agendaPublishToken) {
+          new Notice("Configure Agenda Center publishing in Agenda Capture settings.", 8000);
+          return;
+        }
+        new Notice("Publishing Agenda Center…");
+        const result = await publishAgendaCenter(this.app, {
+          subfolder: this.settings.vaultSubfolder,
+          endpoint: this.settings.agendaPublishEndpoint,
+          token: this.settings.agendaPublishToken,
+        });
+        new Notice(
+          `Agenda Center published: ${result.agendaCount} agendas, ${result.openItemCount} open items.`,
+          8000
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        new Notice(`Agenda publish failed: ${message}`, 10000);
+        console.error("[Agenda Capture publisher]", error);
+      }
+    };
+
+    this.addRibbonIcon("cloud-upload", "Publish Agenda Center", publishAgendas);
+
+    this.addCommand({
+      id: "publish-agenda-center",
+      name: "Publish Agenda Center",
+      callback: publishAgendas,
     });
 
     this.app.workspace.onLayoutReady(() => {

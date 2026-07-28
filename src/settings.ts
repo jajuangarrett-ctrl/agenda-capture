@@ -9,6 +9,8 @@ export interface AgendaCaptureSettings {
   openSavedFileAfterSave: boolean;
   lastUsedTeamMember: string;
   customAcronyms: string;
+  agendaPublishEndpoint: string;
+  agendaPublishToken: string;
 }
 
 export const DEFAULT_SETTINGS: AgendaCaptureSettings = {
@@ -19,6 +21,8 @@ export const DEFAULT_SETTINGS: AgendaCaptureSettings = {
   openSavedFileAfterSave: true,
   lastUsedTeamMember: "",
   customAcronyms: "CalWORKs, VPSS, FJG",
+  agendaPublishEndpoint: "https://fjg-agenda-dashboard.netlify.app/api/agenda-data",
+  agendaPublishToken: "",
 };
 
 export class AgendaCaptureSettingTab extends PluginSettingTab {
@@ -67,6 +71,36 @@ export class AgendaCaptureSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         })
       );
+
+    containerEl.createEl("h3", { text: "Agenda Center publishing" });
+
+    new Setting(containerEl)
+      .setName("Publishing endpoint")
+      .setDesc("Secure data-only endpoint used by the Publish Agenda Center command.")
+      .addText((t) =>
+        t
+          .setPlaceholder(DEFAULT_SETTINGS.agendaPublishEndpoint)
+          .setValue(this.plugin.settings.agendaPublishEndpoint)
+          .onChange(async (v) => {
+            this.plugin.settings.agendaPublishEndpoint =
+              v.trim() || DEFAULT_SETTINGS.agendaPublishEndpoint;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Publishing token")
+      .setDesc("Secret used only to authorize agenda data updates. It is never sent to an AI service.")
+      .addText((t) => {
+        t.inputEl.type = "password";
+        t
+          .setPlaceholder("Configured during installation")
+          .setValue(this.plugin.settings.agendaPublishToken)
+          .onChange(async (v) => {
+            this.plugin.settings.agendaPublishToken = v.trim();
+            await this.plugin.saveSettings();
+          });
+      });
 
     containerEl.createEl("h3", { text: "Voice transcription" });
 
