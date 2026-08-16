@@ -16,17 +16,20 @@ export default class AgendaCapturePlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
-    const openCapture = () => new CaptureModal(this.app, this).open();
+    const openCapture = (initialText = "") =>
+      new CaptureModal(this.app, this, initialText).open();
 
-    this.addRibbonIcon("microphone", "Capture agenda item", openCapture);
+    this.addRibbonIcon("microphone", "Capture agenda item", () => openCapture());
 
     this.addCommand({
       id: "capture",
       name: "Capture agenda item",
-      callback: openCapture,
+      callback: () => openCapture(),
     });
 
-    this.registerObsidianProtocolHandler("agenda-capture", openCapture);
+    this.registerObsidianProtocolHandler("agenda-capture", (params) => {
+      openCapture(String(params.text || ""));
+    });
     this.registerObsidianProtocolHandler("fjg-agenda-clipper", async (params) => {
       await this.handleAgendaClipper(params);
     });
@@ -69,7 +72,7 @@ export default class AgendaCapturePlugin extends Plugin {
     });
 
     this.app.workspace.onLayoutReady(() => {
-      this.recoverMissedAdvancedUriLaunch(openCapture);
+      this.recoverMissedAdvancedUriLaunch(() => openCapture());
     });
 
     this.addSettingTab(new AgendaCaptureSettingTab(this.app, this));

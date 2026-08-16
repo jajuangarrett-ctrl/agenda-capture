@@ -1,7 +1,7 @@
 {
   "id": "agenda-capture",
   "name": "Agenda Capture",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "minAppVersion": "1.4.0",
   "description": "Capture agenda items and publish the shared Agenda Center from per-person Markdown files.",
   "author": "Franklin Garrett",

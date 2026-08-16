@@ -23,9 +23,10 @@ export class CaptureModal extends Modal {
   private recording = false;
   private busy = false;
 
-  constructor(app: App, plugin: AgendaCapturePlugin) {
+  constructor(app: App, plugin: AgendaCapturePlugin, initialText = "") {
     super(app);
     this.plugin = plugin;
+    this.text = initialText.trim();
   }
 
   async onOpen() {
@@ -66,6 +67,7 @@ export class CaptureModal extends Modal {
         this.textArea = t.inputEl;
         t.inputEl.rows = 4;
         t.inputEl.style.width = "100%";
+        t.setValue(this.text);
         t.onChange((v) => {
           this.text = v;
         });

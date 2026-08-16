@@ -51,6 +51,14 @@ Each team member's file:
 
 After save: notice + the modal reopens with the same team preselected if "Show another after save" is enabled.
 
+The review-first protocol can prefill the Item field without writing anything:
+
+```text
+obsidian://agenda-capture?text=<URL-encoded agenda draft>
+```
+
+The user must still choose a team member and press **Save**. This protocol is intentionally separate from `obsidian://fjg-agenda-clipper`, whose validated payload is an explicit immediate-write integration for the Chrome extension.
+
 ## Voice pipeline
 
 1. **Record** uses the browser `MediaRecorder` API (works in Obsidian's iOS WebView).
