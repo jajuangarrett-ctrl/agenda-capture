@@ -9,6 +9,7 @@ import {
 } from "./transcribe";
 import type { Priority } from "./types";
 import type AgendaCapturePlugin from "../main";
+import type { AgendaMailReviewDraft } from "./mail-review";
 
 export class CaptureModal extends Modal {
   private plugin: AgendaCapturePlugin;
@@ -16,6 +17,7 @@ export class CaptureModal extends Modal {
   private text = "";
   private priority: Priority = "Standard";
   private hashtag = "";
+  private initialTeam = "";
 
   private textArea: HTMLTextAreaElement | null = null;
   private recordButton: ButtonComponent | null = null;
@@ -23,10 +25,17 @@ export class CaptureModal extends Modal {
   private recording = false;
   private busy = false;
 
-  constructor(app: App, plugin: AgendaCapturePlugin, initialText = "") {
+  constructor(app: App, plugin: AgendaCapturePlugin, initial: string | AgendaMailReviewDraft = "") {
     super(app);
     this.plugin = plugin;
-    this.text = initialText.trim();
+    if (typeof initial === "string") {
+      this.text = initial.trim();
+    } else {
+      this.initialTeam = initial.team;
+      this.text = initial.text.trim();
+      this.priority = initial.priority;
+      this.hashtag = initial.hashtag;
+    }
   }
 
   async onOpen() {
@@ -47,7 +56,9 @@ export class CaptureModal extends Modal {
     }
 
     const last = this.plugin.settings.lastUsedTeamMember;
-    this.team = roster.members.includes(last) ? last : roster.members[0];
+    this.team = roster.members.includes(this.initialTeam)
+      ? this.initialTeam
+      : roster.members.includes(last) ? last : roster.members[0];
 
     new Setting(contentEl).setName("Team member").addDropdown((d) => {
       roster.members
@@ -91,6 +102,7 @@ export class CaptureModal extends Modal {
 
     new Setting(contentEl).setName("Hashtag (optional)").addText((t) => {
       t.setPlaceholder("#followup");
+      t.setValue(this.hashtag);
       t.onChange((v) => {
         this.hashtag = v.trim();
       });

@@ -8,6 +8,11 @@ Version 0.3.0 also receives agenda items from the separate
 [FJG Obsidian Agenda Clipper](https://github.com/jajuangarrett-ctrl/obsidian-agenda-clipper)
 Chrome extension through the `obsidian://fjg-agenda-clipper` protocol.
 
+Version 0.5.0 adds a review-first `obsidian://fjg-agenda-mail` protocol for the
+Apple Mail Intelligence Quick Action. Its on-device draft may prefill the roster
+member, item, priority, and hashtag, but the user must still review the modal and
+press **Save**.
+
 ## Commands
 
 - **Capture agenda item** — opens the capture modal (also available via the microphone ribbon icon)
@@ -58,6 +63,16 @@ obsidian://agenda-capture?text=<URL-encoded agenda draft>
 ```
 
 The user must still choose a team member and press **Save**. This protocol is intentionally separate from `obsidian://fjg-agenda-clipper`, whose validated payload is an explicit immediate-write integration for the Chrome extension.
+
+The structured Apple Mail review protocol is:
+
+```text
+obsidian://fjg-agenda-mail?payload=<base64url-json>
+```
+
+The plugin validates the draft against the live roster, defaults unsupported
+priority values to Standard, and leaves an unknown team member unselected. It
+never writes merely because the link was opened.
 
 ## Voice pipeline
 
