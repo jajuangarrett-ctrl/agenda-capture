@@ -10,15 +10,13 @@ import { appendAgendaItem } from "./src/append";
 import { parseAgendaClipperPayload } from "./src/clipper";
 import { publishAgendaCenter } from "./src/publish";
 import { loadRoster } from "./src/roster";
-import { parseAgendaMailReviewPayload } from "./src/mail-review";
 
 export default class AgendaCapturePlugin extends Plugin {
   settings: AgendaCaptureSettings = DEFAULT_SETTINGS;
 
   async onload() {
     await this.loadSettings();
-    const openCapture = (initialText = "") =>
-      new CaptureModal(this.app, this, initialText).open();
+    const openCapture = (initialText = "") => this.openCaptureModal(initialText);
 
     this.addRibbonIcon("microphone", "Capture agenda item", () => openCapture());
 
@@ -33,16 +31,6 @@ export default class AgendaCapturePlugin extends Plugin {
     });
     this.registerObsidianProtocolHandler("fjg-agenda-clipper", async (params) => {
       await this.handleAgendaClipper(params);
-    });
-    this.registerObsidianProtocolHandler("fjg-agenda-mail", async (params) => {
-      try {
-        const roster = await loadRoster(this.app, this.settings.vaultSubfolder);
-        const draft = parseAgendaMailReviewPayload(String(params.payload || ""), roster.members);
-        new CaptureModal(this.app, this, draft).open();
-      } catch (error) {
-        console.error("[Agenda Capture] Mail review failed", error);
-        new Notice(`Mail agenda draft failed: ${error instanceof Error ? error.message : String(error)}`, 10000);
-      }
     });
 
     this.addCommand({
@@ -87,6 +75,10 @@ export default class AgendaCapturePlugin extends Plugin {
     });
 
     this.addSettingTab(new AgendaCaptureSettingTab(this.app, this));
+  }
+
+  openCaptureModal(initialText = ""): void {
+    new CaptureModal(this.app, this, initialText).open();
   }
 
   private recoverMissedAdvancedUriLaunch(openCapture: () => void) {

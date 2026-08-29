@@ -9,7 +9,6 @@ import {
 } from "./transcribe";
 import type { Priority } from "./types";
 import type AgendaCapturePlugin from "../main";
-import type { AgendaMailReviewDraft } from "./mail-review";
 
 export class CaptureModal extends Modal {
   private plugin: AgendaCapturePlugin;
@@ -25,17 +24,10 @@ export class CaptureModal extends Modal {
   private recording = false;
   private busy = false;
 
-  constructor(app: App, plugin: AgendaCapturePlugin, initial: string | AgendaMailReviewDraft = "") {
+  constructor(app: App, plugin: AgendaCapturePlugin, initialText = "") {
     super(app);
     this.plugin = plugin;
-    if (typeof initial === "string") {
-      this.text = initial.trim();
-    } else {
-      this.initialTeam = initial.team;
-      this.text = initial.text.trim();
-      this.priority = initial.priority;
-      this.hashtag = initial.hashtag;
-    }
+    this.text = initialText.trim();
   }
 
   async onOpen() {

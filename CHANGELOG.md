@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.0 — 2026-08-28
+
+### Added
+
+- Expose the reviewed Agenda Capture modal through a small native plugin API so
+  FJG Task Manager can prefill an item from its unified capture launcher.
+
+### Changed
+
+- Remove the superseded Apple Mail Intelligence protocol adapter. Agenda items
+  continue to require explicit review and **Save** confirmation.
+
 ## 0.5.0 — 2026-08-27
 
 ### Added
