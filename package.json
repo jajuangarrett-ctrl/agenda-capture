@@ -1,6 +1,6 @@
 {
   "name": "agenda-capture",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Capture agenda items and publish the shared Agenda Center from per-person Markdown files.",
   "main": "main.js",
   "scripts": {
@@ -8,7 +8,12 @@
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "test": "vitest run"
   },
-  "keywords": ["obsidian-plugin", "obsidian", "agenda", "capture"],
+  "keywords": [
+    "obsidian-plugin",
+    "obsidian",
+    "agenda",
+    "capture"
+  ],
   "author": "Franklin Garrett",
   "license": "MIT",
   "devDependencies": {
