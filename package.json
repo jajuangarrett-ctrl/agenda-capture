@@ -1,7 +1,7 @@
 {
   "name": "agenda-capture",
-  "version": "0.7.0",
-  "description": "Capture agenda items and publish the shared Agenda Center from per-person Markdown files.",
+  "version": "0.8.0",
+  "description": "View, capture, print, and publish agendas from per-person Markdown files.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

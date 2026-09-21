@@ -23,3 +23,9 @@
   require the user to press **Save** before any Markdown is changed.
 - Add regression tests for valid, malformed, invented-roster, and unsupported
   priority payloads.
+# 0.8.0
+
+- Added the Obsidian-native Agenda Center dashboard backed directly by `05 People/Agenda Items`.
+- Added live voice and typed capture actions from the dashboard, with the selected agenda prefilled.
+- Added printable individual agendas and one-click access to each source Markdown note.
+- Added live counts, agenda search, refresh, empty states, and automatic updates after vault changes.
