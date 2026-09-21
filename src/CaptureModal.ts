@@ -27,10 +27,11 @@ export class CaptureModal extends Modal {
   private recording = false;
   private busy = false;
 
-  constructor(app: App, plugin: AgendaCapturePlugin, initialText = "") {
+  constructor(app: App, plugin: AgendaCapturePlugin, initialText = "", initialTeam = "") {
     super(app);
     this.plugin = plugin;
     this.text = initialText.trim();
+    this.initialTeam = initialTeam.trim();
   }
 
   async onOpen() {

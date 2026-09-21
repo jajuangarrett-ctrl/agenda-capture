@@ -1,4 +1,4 @@
-import { Notice, Plugin, TFile } from "obsidian";
+import { Notice, Plugin, TFile, WorkspaceLeaf } from "obsidian";
 import {
   AgendaCaptureSettings,
   AgendaCaptureSettingTab,
@@ -10,13 +10,23 @@ import { appendAgendaItem } from "./src/append";
 import { parseAgendaClipperPayload } from "./src/clipper";
 import { publishAgendaCenter } from "./src/publish";
 import { loadRoster } from "./src/roster";
+import { AGENDA_DASHBOARD_VIEW, AgendaDashboardView } from "./src/DashboardView";
 
 export default class AgendaCapturePlugin extends Plugin {
   settings: AgendaCaptureSettings = DEFAULT_SETTINGS;
 
   async onload() {
     await this.loadSettings();
+    this.registerView(AGENDA_DASHBOARD_VIEW, (leaf) => new AgendaDashboardView(leaf, this));
     const openCapture = (initialText = "") => this.openCaptureModal(initialText);
+
+    this.addRibbonIcon("notebook-tabs", "Open Agenda Center", () => void this.activateDashboard());
+
+    this.addCommand({
+      id: "open-agenda-center",
+      name: "Open Agenda Center",
+      callback: () => void this.activateDashboard(),
+    });
 
     this.addRibbonIcon("microphone", "Capture agenda item", () => openCapture());
 
@@ -74,11 +84,31 @@ export default class AgendaCapturePlugin extends Plugin {
       this.recoverMissedAdvancedUriLaunch(() => openCapture());
     });
 
+    this.registerEvent(this.app.vault.on("modify", (file) => {
+      if (file.path.startsWith(`${this.settings.vaultSubfolder}/`)) this.refreshDashboard();
+    }));
+
     this.addSettingTab(new AgendaCaptureSettingTab(this.app, this));
   }
 
-  openCaptureModal(initialText = ""): void {
-    new CaptureModal(this.app, this, initialText).open();
+  openCaptureModal(initialText = "", initialTeam = ""): void {
+    new CaptureModal(this.app, this, initialText, initialTeam).open();
+  }
+
+  async activateDashboard(): Promise<void> {
+    let leaf: WorkspaceLeaf | undefined = this.app.workspace.getLeavesOfType(AGENDA_DASHBOARD_VIEW)[0];
+    if (!leaf) {
+      leaf = this.app.workspace.getLeaf("tab");
+      await leaf.setViewState({ type: AGENDA_DASHBOARD_VIEW, active: true });
+    }
+    this.app.workspace.revealLeaf(leaf);
+  }
+
+  private refreshDashboard(): void {
+    for (const leaf of this.app.workspace.getLeavesOfType(AGENDA_DASHBOARD_VIEW)) {
+      const view = leaf.view;
+      if (view instanceof AgendaDashboardView) void view.refresh();
+    }
   }
 
   private recoverMissedAdvancedUriLaunch(openCapture: () => void) {
