@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.2 — 2026-09-21
+
+- Let live voice read the currently selected agenda's open Markdown items through a read-only tool.
+- Refresh agenda context after changing the selected person, team, or program.
+- Keep batch agenda items on separate lines during voice capture.
+
 ## 0.8.1 — 2026-09-21
 
 - Move live Talk to Capture controls to the top of the capture window.

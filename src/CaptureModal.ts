@@ -11,6 +11,7 @@ import {
 } from "./transcribe";
 import type { Priority } from "./types";
 import type AgendaCapturePlugin from "../main";
+import { parseOpenAgendaTasks } from "./publishData";
 
 export class CaptureModal extends Modal {
   private voice?: CaptureVoice;
@@ -59,6 +60,19 @@ export class CaptureModal extends Modal {
 
     this.voice = new CaptureVoice(contentEl, this.app, "Agenda items — one item per line; multiple items may be prepared in one conversation", {
       fields: () => settingFields(contentEl, ['Team member', 'Agenda items']),
+      context: async () => {
+        const agenda = this.team;
+        const path = `${this.plugin.settings.vaultSubfolder}/${agenda}.md`;
+        const file = this.app.vault.getAbstractFileByPath(path);
+        if (!(file instanceof TFile)) return { agenda, open_items: [], source_found: false };
+        const tasks = parseOpenAgendaTasks(await this.app.vault.cachedRead(file), agenda);
+        return {
+          agenda,
+          source_found: true,
+          open_item_count: tasks.length,
+          open_items: tasks.map((task) => ({ title: task.title, priority: task.priority, category: task.category })),
+        };
+      },
       ready: () => !this.closed && !this.busy && !this.recording,
       save: async () => !!(await this.save(false))
     }, () => captureKey(this.app, this.plugin.settings.openaiApiKey));
