@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.1 — 2026-09-21
+
+- Replace the blocked browser pop-up with an in-place Obsidian print flow.
+- Keep the same reference-matched Letter layout and multi-page pagination without requiring a pop-up permission setting.
+- Clean up the temporary print document after printing or a print failure.
+
 ## 0.10.0 — 2026-09-21
 
 - Match the Agenda Center preview and Letter-size PDF export to the Student Support Services department agenda design.
