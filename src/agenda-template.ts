@@ -45,9 +45,10 @@ export function agendaMarkup(agenda: PublishedAgendaMember, title: string, month
 }
 
 /** Paginate by measured row heights so long agendas repeat the banner and never clip at a footer. */
-export function paginateAgenda(doc: Document): void {
-  const source = doc.querySelector<HTMLElement>('.ag-sheet');
+export function paginateAgenda(root: Document | HTMLElement): void {
+  const source = root.querySelector<HTMLElement>('.ag-sheet');
   if (!source) return;
+  const doc = source.ownerDocument;
   const rows = Array.from(source.querySelectorAll<HTMLElement>('.ag-row'));
   const header = source.querySelector('.ag-banner')!, footer = source.querySelector('.ag-footer')!;
   const host = doc.createElement('main'); source.replaceWith(host);
@@ -74,4 +75,39 @@ export function paginateAgenda(doc: Document): void {
 
 export function agendaPrintHtml(agenda: PublishedAgendaMember, title: string, month: string): string {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} - ${escapeHtml(month)}</title><style>${AGENDA_DOCUMENT_CSS}</style></head><body>${agendaMarkup(agenda,title,month)}</body></html>`;
+}
+
+const PRINT_HOST_CSS = `
+.fjg-agenda-print-host{position:fixed;left:-100000px;top:0;width:816px;visibility:hidden;pointer-events:none;background:#fff}
+@media print{
+  body.fjg-agenda-printing{margin:0!important;padding:0!important;background:#fff!important;overflow:visible!important}
+  body.fjg-agenda-printing>*:not(.fjg-agenda-print-host){display:none!important}
+  body.fjg-agenda-printing>.fjg-agenda-print-host{display:block!important;position:static!important;left:auto!important;top:auto!important;width:auto!important;visibility:visible!important;pointer-events:auto!important}
+}`;
+
+/** Print inside the current Obsidian window; browser-style pop-ups are not required. */
+export function printAgendaInPlace(doc: Document, win: Window, agenda: PublishedAgendaMember, title: string, month: string): boolean {
+  doc.querySelector('.fjg-agenda-print-host')?.remove();
+  const host = doc.createElement('section');
+  host.className = 'fjg-agenda-print-host';
+  host.innerHTML = `<style>${AGENDA_DOCUMENT_CSS}${PRINT_HOST_CSS}</style>${agendaMarkup(agenda, title, month)}`;
+  doc.body.appendChild(host);
+  paginateAgenda(host);
+  doc.body.classList.add('fjg-agenda-printing');
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    doc.body.classList.remove('fjg-agenda-printing');
+    host.remove();
+  };
+  win.addEventListener('afterprint', cleanup, { once: true });
+  try {
+    win.print();
+    win.setTimeout(cleanup, 60_000);
+    return true;
+  } catch {
+    cleanup();
+    return false;
+  }
 }

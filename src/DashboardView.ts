@@ -2,8 +2,7 @@ import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import type AgendaCapturePlugin from "../main";
 import { getAgendaKind, parseOpenAgendaTasks, type PublishedAgendaMember } from "./publishData";
 import { loadRoster } from "./roster";
-import { completeChecklistItem } from "./markdown";
-import { agendaMarkup, agendaPrintHtml, paginateAgenda, AGENDA_DOCUMENT_CSS } from './agenda-template';
+import { agendaMarkup, printAgendaInPlace, AGENDA_DOCUMENT_CSS } from './agenda-template';
 import { editAgendaBlock } from './agenda-document';
 
 export const AGENDA_DASHBOARD_VIEW = "fjg-agenda-dashboard";
@@ -189,11 +188,9 @@ export class AgendaDashboardView extends ItemView {
   }
 
   private printAgenda(agenda: PublishedAgendaMember): void {
-    const popup = window.open("", "_blank", "width=900,height=1000");
-    if (!popup) { new Notice("Allow pop-ups in Obsidian to print this agenda."); return; }
     const title = this.titles.get(agenda.name) || (agenda.name === 'SSS Team' ? 'Department Meeting Agenda' : `${agenda.name} Meeting Agenda`);
-    popup.document.write(agendaPrintHtml(agenda, title, this.meetingMonth));
-    popup.document.close();
-    setTimeout(() => { paginateAgenda(popup.document); popup.focus(); popup.print(); }, 250);
+    if (!printAgendaInPlace(this.containerEl.doc, this.containerEl.win, agenda, title, this.meetingMonth)) {
+      new Notice("This device could not open its print dialog. Try again after restarting Obsidian.");
+    }
   }
 }
