@@ -26,14 +26,14 @@ describe("parseOpenAgendaTasks", () => {
     expect(tasks[0].priority).toBe("High impact");
   });
 
-  it("deduplicates equivalent open items and joins continuation text", () => {
+  it("retains separately editable similar items and joins continuation text", () => {
     const markdown = [
       "- [ ] Follow up with the team",
       "  about the updated schedule.",
       "- [ ] Follow-up with the team about the updated schedule",
     ].join("\n");
     const tasks = parseOpenAgendaTasks(markdown, "Leyla Recinos");
-    expect(tasks).toHaveLength(1);
+    expect(tasks).toHaveLength(2);
     expect(tasks[0].title).toBe("Follow up with the team about the updated schedule.");
   });
 });
