@@ -5,6 +5,7 @@
 - Move live Talk to Capture controls to the top of the capture window.
 - Prefer the existing FJG Objective Manager OpenAI key, with the Agenda Capture key as fallback.
 - Allow multiple agenda items in one capture, one item per line, and save them together.
+- Add a dashboard action that marks an item complete in Markdown and immediately removes it from the active agenda.
 
 ## 0.6.0 — 2026-08-28
 
