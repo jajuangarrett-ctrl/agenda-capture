@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.0 — 2026-09-21
+
+- Match the Agenda Center preview and Letter-size PDF export to the Student Support Services department agenda design.
+- Let live voice find hashtag items from spoken words, including “Cal Works” for `#CalWORKs`, and reliably update or remove them.
+- Let live voice reorder agenda items by requested position while preserving Markdown details and completed tasks.
+- Keep hashtags when rewriting an item unless the user explicitly asks to change its tags.
+- Parse multi-line checklist items safely and omit completed items from the active dashboard and export.
+
 ## 0.9.0 — 2026-09-21
 
 - Replace the dashboard's form-filling voice shortcut with an Objective Manager-style conversational agenda controller.
