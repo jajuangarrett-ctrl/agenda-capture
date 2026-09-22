@@ -1,9 +1,12 @@
+import { agendaBlocks } from './agenda-document';
 export interface PublishedAgendaTask {
   key: string;
   title: string;
   priority: "" | "High impact";
   category: string;
   sourceIndex: number;
+  tags?: string[];
+  raw?: string;
 }
 
 export interface PublishedAgendaMember {
@@ -107,42 +110,21 @@ export function parseOpenAgendaTasks(
   markdown: string,
   memberName: string
 ): PublishedAgendaTask[] {
-  const withoutFrontmatter = String(markdown)
-    .replace(/^\uFEFF/, "")
-    .replace(/^---\s*\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/, "");
-  const rows: Array<{ completed: boolean; raw: string }> = [];
-  let current: { completed: boolean; raw: string } | null = null;
-
-  for (const line of withoutFrontmatter.split(/\r?\n/)) {
-    const match = line.match(/^\s*[-*]\s*\[([ xX])\]\s*(.*)$/);
-    if (match) {
-      current = {
-        completed: match[1].toLowerCase() === "x",
-        raw: match[2].trim(),
-      };
-      rows.push(current);
-      continue;
-    }
-    const continuation = line.trim();
-    if (current && continuation && !/^#{1,6}\s/.test(continuation)) {
-      current.raw += ` ${continuation}`;
-    }
-  }
-
-  const seen = new Set<string>();
+  const rows = agendaBlocks(markdown);
   const tasks: PublishedAgendaTask[] = [];
   rows.forEach((row, sourceIndex) => {
     if (row.completed) return;
     const title = cleanTaskText(row.raw);
     const normalized = normalizeText(title);
-    if (!title || seen.has(normalized)) return;
-    seen.add(normalized);
+    if (!title) return;
     tasks.push({
-      key: `task-${simpleHash(`${memberName}|${normalized}`)}`,
+      key: `task-${sourceIndex}-${simpleHash(`${memberName}|${row.raw}`)}`,
       title,
       priority: /#HighImpact\b/i.test(row.raw) ? "High impact" : "",
       category: categorizeAgendaItem(title),
       sourceIndex,
+      tags: row.tags,
+      raw: row.raw,
     });
   });
   return tasks;
