@@ -10,7 +10,7 @@ const tool = (name: string, description: string, properties: Record<string, unkn
 
 export const AGENDA_LIVE_TOOLS = [
   tool("list_agendas", "List active agenda names and open-item counts. Use to find or disambiguate an agenda.", { query: string }),
-  tool("read_agenda", "Read one exact agenda and return open items, stable item keys, and a revision required for edits.", { agenda: string }),
+  tool("read_agenda", "Read one exact agenda and return open items, current item keys, and a revision required for edits.", { agenda: string }),
   tool("find_agenda_items", "Find open items by words or hashtag, case-insensitive. Cal Works and #CalWORKs match alike. Empty agenda searches all roster agendas. Disambiguate multiple matches before editing.", { agenda: string, query: string }),
   tool("move_agenda_item", "Move one open item to a 1-based position in its agenda. First position is 1; use the open-item count for last. Read first and use the latest revision.", { agenda: string, expected_revision: string, item_key: string, position: { type: 'integer', minimum: 1 } }),
   tool("add_agenda_items", "Add one or more new items to one exact agenda. Read the agenda first and use its latest revision.", {
@@ -46,6 +46,7 @@ export class LiveAgendaTools {
       const members = agenda ? [agenda] : roster.members;
       const matches = [];
       for (const member of members) {
+        if (!agenda && !(this.app.vault.getAbstractFileByPath(`${this.subfolder()}/${member}.md`) instanceof TFile)) continue;
         const loaded = await this.load(member, roster.members);
         matches.push(...this.snapshot(loaded).items.filter(item => normalize(item.raw).includes(normalize(query))).map(item => ({ agenda: member, revision: loaded.revision, ...item })));
       }
@@ -55,6 +56,7 @@ export class LiveAgendaTools {
       const query = this.text(args.query, 200).toLowerCase();
       const results = [];
       for (const agenda of roster.members.filter((item) => !query || item.toLowerCase().includes(query))) {
+        if (!(this.app.vault.getAbstractFileByPath(`${this.subfolder()}/${agenda}.md`) instanceof TFile)) continue;
         const loaded = await this.load(agenda, roster.members);
         results.push({ agenda, open_item_count: loaded.tasks.length });
       }

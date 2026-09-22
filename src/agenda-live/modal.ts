@@ -10,7 +10,7 @@ export class AgendaLiveModal extends Modal {
   private startButton!:HTMLButtonElement; private muteButton!:HTMLButtonElement; private endButton!:HTMLButtonElement;
   constructor(app:App, private plugin:AgendaCapturePlugin, private selected:()=>string, private released:()=>void){super(app);}
   onOpen():void{this.titleEl.setText("Talk to Agenda Center");this.modalEl.addClass("fjg-agenda-live-modal");const root=this.contentEl;
-    root.createEl("p",{text:"Ask what is on an agenda, have it read aloud, or say what to add, rename, complete, or delete. Clear requests save immediately."});
+    root.createEl("p",{text:"Ask what is on an agenda, have it read aloud, or say what to add, edit, reorder, or remove. Clear requests save immediately."});
     this.status=root.createEl("p",{text:"Microphone off — press Start conversation",cls:"fjg-agenda-live-status",attr:{role:"status"}});
     const controls=root.createDiv({cls:"fjg-capture-live-controls"});this.startButton=controls.createEl("button",{text:"Start conversation",cls:"mod-cta"});this.startButton.onclick=()=>void this.start();
     this.muteButton=controls.createEl("button",{text:"Mute microphone"});this.muteButton.disabled=true;this.muteButton.onclick=()=>{this.muted=!this.muted;this.session?.mute(this.muted);this.muteButton.setText(this.muted?"Unmute microphone":"Mute microphone");};
