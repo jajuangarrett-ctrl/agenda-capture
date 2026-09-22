@@ -3,6 +3,8 @@ import type AgendaCapturePlugin from "../main";
 import { getAgendaKind, parseOpenAgendaTasks, type PublishedAgendaMember } from "./publishData";
 import { loadRoster } from "./roster";
 import { completeChecklistItem } from "./markdown";
+import { agendaMarkup, agendaPrintHtml, paginateAgenda, AGENDA_DOCUMENT_CSS } from './agenda-template';
+import { editAgendaBlock } from './agenda-document';
 
 export const AGENDA_DASHBOARD_VIEW = "fjg-agenda-dashboard";
 
@@ -11,6 +13,8 @@ export class AgendaDashboardView extends ItemView {
   private selected = "";
   private query = "";
   private loading = false;
+  private titles = new Map<string, string>();
+  private meetingMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   constructor(leaf: WorkspaceLeaf, private readonly plugin: AgendaCapturePlugin) {
     super(leaf);
@@ -40,7 +44,7 @@ export class AgendaDashboardView extends ItemView {
           kind: getAgendaKind(name),
           fileName: file.name,
           modified: new Date(file.stat.mtime).toISOString(),
-          shortHash: "",
+          shortHash: markdown,
           tasks: parseOpenAgendaTasks(markdown, name),
         });
       }
@@ -60,6 +64,7 @@ export class AgendaDashboardView extends ItemView {
     const root = this.containerEl.children[1] as HTMLElement;
     root.empty();
     root.addClass("fjg-agenda-dashboard");
+    root.createEl('style', { text: AGENDA_DOCUMENT_CSS });
     this.renderHeader(root);
 
     const total = this.agendas.reduce((sum, agenda) => sum + agenda.tasks.length, 0);
@@ -135,47 +140,44 @@ export class AgendaDashboardView extends ItemView {
       return;
     }
     const heading = panel.createDiv({ cls: "agenda-panel-heading" });
-    const copy = heading.createDiv();
-    copy.createEl("p", { text: agenda.kind.toUpperCase(), cls: "agenda-eyebrow" });
-    copy.createEl("h2", { text: agenda.name });
-    copy.createEl("p", { text: `${agenda.tasks.length} open ${agenda.tasks.length === 1 ? "item" : "items"}`, cls: "agenda-panel-subtitle" });
+    const copy = heading.createDiv({cls:'agenda-export-fields'});
+    const titleLabel = copy.createEl('label', {text:'Agenda title'});
+    const titleInput = titleLabel.createEl('input', {attr:{'aria-label':'Agenda title'}});
+    const title = this.titles.get(agenda.name) || (agenda.name === 'SSS Team' ? 'Department Meeting Agenda' : `${agenda.name} Meeting Agenda`);
+    titleInput.value = title;
+    const dateLabel = copy.createEl('label', {text:'Meeting date'});
+    const dateInput = dateLabel.createEl('input', {attr:{'aria-label':'Meeting date'}}); dateInput.value = this.meetingMonth;
     const actions = heading.createDiv({ cls: "agenda-panel-actions" });
-    const print = actions.createEl("button", { text: "Print agenda" });
+    const print = actions.createEl("button", { text: "Print / Save PDF" });
     const printIcon = print.createSpan({ cls: "agenda-button-icon" });
     setIcon(printIcon, "printer");
     print.addEventListener("click", () => this.printAgenda(agenda));
     const open = actions.createEl("button", { text: "Open source" });
     open.addEventListener("click", () => void this.openSource(agenda));
 
-    const items = panel.createDiv({ cls: "agenda-items" });
-    if (!agenda.tasks.length) {
-      const empty = items.createDiv({ cls: "agenda-empty" });
-      empty.createEl("strong", { text: "Nothing waiting" });
-      empty.createEl("p", { text: "This agenda has no open items." });
-      return;
-    }
-    agenda.tasks.forEach((task, index) => {
-      const row = items.createEl("article", { cls: "agenda-item" });
-      row.createSpan({ text: String(index + 1).padStart(2, "0"), cls: "agenda-item-number" });
-      const body = row.createDiv();
-      body.createEl("p", { text: task.title, cls: "agenda-item-title" });
-      const meta = body.createDiv({ cls: "agenda-item-meta" });
-      meta.createSpan({ text: task.category });
-      if (task.priority) meta.createSpan({ text: task.priority, cls: "is-priority" });
-      const remove = row.createEl("button", {
-        cls: "agenda-item-remove",
-        attr: { "aria-label": `Remove ${task.title} from this agenda`, title: "Mark complete and remove from agenda" },
+    const preview = panel.createDiv({cls:'agenda-document-preview'});
+    const renderPreview = () => {
+      preview.innerHTML = agendaMarkup(agenda, this.titles.get(agenda.name) || title, this.meetingMonth);
+      const rows = preview.querySelectorAll<HTMLElement>('.ag-row');
+      agenda.tasks.forEach((task, index) => {
+        const remove = rows[index].createEl('button', {cls:'ag-complete', attr:{'aria-label':`Mark complete: ${task.title}`,title:'Mark complete and remove from agenda'}});
+        setIcon(remove, 'check');
+        remove.onclick = () => void this.completeItem(agenda, task.sourceIndex).catch(error => new Notice(String(error)));
       });
-      setIcon(remove, "check");
-      remove.addEventListener("click", () => void this.completeItem(agenda, task.sourceIndex));
-    });
+    };
+    titleInput.oninput = () => {this.titles.set(agenda.name,titleInput.value);renderPreview();};
+    dateInput.oninput = () => {this.meetingMonth=dateInput.value;renderPreview();};
+    renderPreview();
   }
 
   private async completeItem(agenda: PublishedAgendaMember, sourceIndex: number): Promise<void> {
     const path = `${this.plugin.settings.vaultSubfolder}/${agenda.fileName}`;
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof TFile)) { new Notice("The source agenda file could not be found."); return; }
-    await this.app.vault.process(file, (markdown) => completeChecklistItem(markdown, sourceIndex));
+    await this.app.vault.process(file, (markdown) => {
+      if (markdown !== agenda.shortHash) throw new Error('Agenda changed. Refresh before marking this item complete.');
+      return editAgendaBlock(markdown, sourceIndex, 'complete');
+    });
     new Notice("Agenda item marked complete and removed from the active agenda.");
     await this.refresh();
   }
@@ -189,11 +191,9 @@ export class AgendaDashboardView extends ItemView {
   private printAgenda(agenda: PublishedAgendaMember): void {
     const popup = window.open("", "_blank", "width=900,height=1000");
     if (!popup) { new Notice("Allow pop-ups in Obsidian to print this agenda."); return; }
-    const escape = (value: string) => value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char] || char));
-    const rows = agenda.tasks.length
-      ? agenda.tasks.map((task, index) => `<li><span>${String(index + 1).padStart(2, "0")}</span><p>${escape(task.title)}</p></li>`).join("")
-      : "<li class=empty>No open agenda items.</li>";
-    popup.document.write(`<!doctype html><html><head><title>${escape(agenda.name)} Agenda</title><style>@page{margin:.65in}*{box-sizing:border-box}body{color:#29242e;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0}header{border-bottom:4px solid #53257f;padding-bottom:22px;margin-bottom:28px}small{color:#53257f;font-weight:800;letter-spacing:.1em}h1{font-size:36px;margin:5px 0 4px}header p{color:#655d6d;margin:0}ol{list-style:none;margin:0;padding:0}li{display:grid;grid-template-columns:46px 1fr;gap:16px;border-bottom:1px solid #ddd7e2;padding:16px 0;break-inside:avoid}li span{color:#53257f;font-weight:800}li p{margin:0}.empty{display:block;color:#655d6d}footer{color:#655d6d;font-size:12px;margin-top:32px}</style></head><body><header><small>STUDENT SUPPORT SERVICES</small><h1>${escape(agenda.name)}</h1><p>Meeting agenda · ${new Date().toLocaleDateString()}</p></header><ol>${rows}</ol><footer>Prepared from FJG Agenda Center</footer><script>window.onload=()=>window.print()<\/script></body></html>`);
+    const title = this.titles.get(agenda.name) || (agenda.name === 'SSS Team' ? 'Department Meeting Agenda' : `${agenda.name} Meeting Agenda`);
+    popup.document.write(agendaPrintHtml(agenda, title, this.meetingMonth));
     popup.document.close();
+    setTimeout(() => { paginateAgenda(popup.document); popup.focus(); popup.print(); }, 250);
   }
 }

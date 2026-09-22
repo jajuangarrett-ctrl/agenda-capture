@@ -63,6 +63,30 @@
 .agenda-empty { padding: 48px 24px; color: var(--text-muted); text-align: center; }
 .agenda-empty strong { color: var(--text-normal); font-size: 20px; }
 
+/* Agenda Center follows the September 2026 department agenda reference. */
+.fjg-agenda-dashboard{--agenda-accent:#123e5b;--agenda-soft:#eaf1f6;--agenda-line:#d2dfea;font-family:Arial,Helvetica,sans-serif;color:#253b4e;background:#fff}
+.fjg-agenda-dashboard .agenda-dashboard-header{border:0;border-radius:0;border-left:7px solid #ed7926;background:#0c2b40;padding:20px 24px;color:white}
+.fjg-agenda-dashboard .agenda-dashboard-header h1{font:normal 30px/1.2 Arial,Helvetica,sans-serif;color:white;margin:4px 0}
+.fjg-agenda-dashboard .agenda-eyebrow,.fjg-agenda-dashboard .agenda-lede{color:white;font-family:Arial,Helvetica,sans-serif}
+.fjg-agenda-dashboard .agenda-lede{display:none}
+.fjg-agenda-dashboard .agenda-talk-button{background:#ed7926;color:white;border:0}
+.fjg-agenda-dashboard .agenda-summary{display:flex;gap:24px;margin:14px 0}
+.fjg-agenda-dashboard .agenda-metric{display:flex;align-items:baseline;gap:7px;border:0;background:none;padding:0}
+.fjg-agenda-dashboard .agenda-metric strong{font-size:19px}.fjg-agenda-dashboard .agenda-metric span{color:#577087;font-size:11px}
+.fjg-agenda-dashboard .agenda-workspace{grid-template-columns:220px minmax(0,1fr);gap:16px}
+.fjg-agenda-dashboard .agenda-rail,.fjg-agenda-dashboard .agenda-main{background:white;border-radius:8px}
+.fjg-agenda-dashboard .agenda-rail h2{font:600 18px Arial,Helvetica,sans-serif;color:#123e5b}
+.fjg-agenda-dashboard .agenda-rail-row{box-shadow:none;background:white;color:#253b4e;height:auto;white-space:normal}
+.fjg-agenda-dashboard .agenda-rail-row.is-active{background:#eaf1f6;box-shadow:inset 3px 0 #ed7926}
+.fjg-agenda-dashboard .agenda-panel-heading{padding:14px;flex-wrap:wrap;background:#f4f7f9}
+.agenda-export-fields{display:flex;flex-wrap:wrap;gap:10px;flex:1}
+.agenda-export-fields label{display:grid;gap:4px;font-size:12px;color:#577087;flex:1;min-width:150px}
+.agenda-export-fields input{width:100%;min-width:0;background:white;color:#253b4e}
+.agenda-document-preview{padding:0 0 18px;background:white}
+.fjg-agenda-live-modal{width:min(700px,95vw)}.fjg-agenda-live-modal audio{width:100%;margin-top:12px}
+.fjg-agenda-live-modal .fjg-capture-live-controls button{min-height:44px}
+@media(max-width:800px){.fjg-agenda-dashboard .agenda-workspace{grid-template-columns:1fr}.fjg-agenda-dashboard .agenda-rail{position:static}.fjg-agenda-dashboard .agenda-rail-list{max-height:170px}.fjg-agenda-dashboard .agenda-dashboard-header{flex-direction:column}.fjg-agenda-dashboard .agenda-summary{flex-wrap:wrap}.fjg-agenda-dashboard .agenda-panel-heading{flex-direction:column}}
+
 @media (max-width: 600px) {
  .fjg-agenda-dashboard { padding: 12px; }
  .agenda-dashboard-header, .agenda-panel-heading { flex-direction: column; padding: 22px; }
