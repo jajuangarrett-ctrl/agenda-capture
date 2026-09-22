@@ -9,10 +9,18 @@ export interface LiveCallbacks {
   execute: (name: string, args: string, id: string) => Promise<unknown>;
 }
 
-export function liveRequest(sdp: string, backendModel: string, context: string) {
-  return { session: { model: "gpt-live-1", instructions: LIVE_INSTRUCTIONS + "\nCapture context: " + context,
-    delegation: { type: "responses", responses: { model: backendModel, instructions: backendInstructions(context),
-      tools: LIVE_TOOLS, tool_choice: "auto", parallel_tool_calls: false, max_output_tokens: 1800 } } },
+export interface LiveSessionConfig {
+  instructions: string;
+  backendInstructions: (context: string) => string;
+  tools: unknown[];
+  maxOutputTokens?: number;
+}
+
+export function liveRequest(sdp: string, backendModel: string, context: string, config?: LiveSessionConfig) {
+  const active = config || { instructions: LIVE_INSTRUCTIONS, backendInstructions, tools: LIVE_TOOLS, maxOutputTokens: 1800 };
+  return { session: { model: "gpt-live-1", instructions: active.instructions + "\nContext: " + context,
+    delegation: { type: "responses", responses: { model: backendModel, instructions: active.backendInstructions(context),
+      tools: active.tools, tool_choice: "auto", parallel_tool_calls: false, max_output_tokens: active.maxOutputTokens || 1800 } } },
     transport: { type: "webrtc", sdp } };
 }
 
@@ -31,7 +39,7 @@ export class CaptureLiveSession {
   }
   get active(): boolean { return this.ready && !this.disposed && !this.ending; }
 
-  async start(apiKey: string, backendModel: string, context: string): Promise<void> {
+  async start(apiKey: string, backendModel: string, context: string, config?: LiveSessionConfig): Promise<void> {
     if (this.disposed) return;
     this.callbacks.state("connecting", "Connecting to GPT-Live…");
     try {
@@ -67,7 +75,7 @@ export class CaptureLiveSession {
       this.timer = setTimeout(() => this.fail("Voice connection timed out. Check your network and API model access, then try again."), 30000);
       const response = await requestUrl({ url: "https://api.openai.com/v1/live/sessions", method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify(liveRequest(sdp, backendModel, context)), throw: false });
+        body: JSON.stringify(liveRequest(sdp, backendModel, context, config)), throw: false });
       if (this.disposed) return;
       if (response.status >= 400) {
         const hint = response.status === 401 ? "Check your saved OpenAI API key." : response.status === 403 || response.status === 404 ? "Check that your OpenAI project has GPT-Live-1 and backend model access." : response.status === 429 ? "Check your OpenAI quota or try again later." : "Try again after checking your OpenAI account and network.";

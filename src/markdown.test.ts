@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { completeChecklistItem, insertBulletAtTop, renderBullet, splitAgendaItems } from "./markdown";
+import { completeChecklistItem, deleteChecklistItem, insertBulletAtTop, renameChecklistItem, renderBullet, splitAgendaItems } from "./markdown";
 import type { AgendaItem } from "./types";
 
 describe("renderBullet", () => {
@@ -53,6 +53,16 @@ describe("completeChecklistItem", () => {
     expect(completeChecklistItem("- [x] Done\n- [ ] Remove me\n- [ ] Keep me\n", 1)).toBe(
       "- [x] Done\n- [x] Remove me\n- [ ] Keep me\n"
     );
+  });
+});
+
+describe("agenda checklist editing", () => {
+  const source = "- [ ] Old title #agenda #Standard\n- [ ] Keep me #agenda\n";
+  it("renames an item while preserving its tags", () => {
+    expect(renameChecklistItem(source, 0, "New title")).toContain("- [ ] New title #agenda #Standard");
+  });
+  it("deletes only the selected checklist item", () => {
+    expect(deleteChecklistItem(source, 0)).toBe("- [ ] Keep me #agenda\n");
   });
 });
 

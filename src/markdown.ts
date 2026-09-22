@@ -16,6 +16,27 @@ export function completeChecklistItem(markdown: string, checklistIndex: number):
   });
 }
 
+export function renameChecklistItem(markdown: string, checklistIndex: number, title: string): string {
+  const clean = title.trim();
+  if (!clean || !Number.isInteger(checklistIndex) || checklistIndex < 0) return markdown;
+  let current = -1;
+  return markdown.replace(/^(\s*[-*]\s*\[[ xX]\]\s*)(.*)$/gm, (line, prefix, body) => {
+    current += 1;
+    if (current !== checklistIndex) return line;
+    const tags = body.match(/(?:\s+#[A-Za-z0-9_/-]+)+\s*$/)?.[0] || "";
+    return `${prefix}${clean}${tags}`;
+  });
+}
+
+export function deleteChecklistItem(markdown: string, checklistIndex: number): string {
+  if (!Number.isInteger(checklistIndex) || checklistIndex < 0) return markdown;
+  let current = -1;
+  return markdown.split(/\n/).filter((line) => {
+    if (/^\s*[-*]\s*\[[ xX]\]\s*/.test(line)) current += 1;
+    return current !== checklistIndex || !/^\s*[-*]\s*\[[ xX]\]\s*/.test(line);
+  }).join("\n");
+}
+
 export function renderBullet(item: AgendaItem): string {
   const tags = ["#agenda"];
   if (item.hashtag) {

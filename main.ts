@@ -11,9 +11,11 @@ import { parseAgendaClipperPayload } from "./src/clipper";
 import { publishAgendaCenter } from "./src/publish";
 import { loadRoster } from "./src/roster";
 import { AGENDA_DASHBOARD_VIEW, AgendaDashboardView } from "./src/DashboardView";
+import { AgendaLiveModal } from "./src/agenda-live/modal";
 
 export default class AgendaCapturePlugin extends Plugin {
   settings: AgendaCaptureSettings = DEFAULT_SETTINGS;
+  private agendaLiveModal?: AgendaLiveModal;
 
   async onload() {
     await this.loadSettings();
@@ -95,6 +97,12 @@ export default class AgendaCapturePlugin extends Plugin {
     new CaptureModal(this.app, this, initialText, initialTeam).open();
   }
 
+  openLiveAgenda(selected: () => string): void {
+    if (this.agendaLiveModal) return;
+    this.agendaLiveModal = new AgendaLiveModal(this.app, this, selected, () => { this.agendaLiveModal = undefined; });
+    this.agendaLiveModal.open();
+  }
+
   async activateDashboard(): Promise<void> {
     let leaf: WorkspaceLeaf | undefined = this.app.workspace.getLeavesOfType(AGENDA_DASHBOARD_VIEW)[0];
     if (!leaf) {
@@ -104,7 +112,7 @@ export default class AgendaCapturePlugin extends Plugin {
     this.app.workspace.revealLeaf(leaf);
   }
 
-  private refreshDashboard(): void {
+  refreshDashboard(): void {
     for (const leaf of this.app.workspace.getLeavesOfType(AGENDA_DASHBOARD_VIEW)) {
       const view = leaf.view;
       if (view instanceof AgendaDashboardView) void view.refresh();

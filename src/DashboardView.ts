@@ -80,10 +80,10 @@ export class AgendaDashboardView extends ItemView {
     copy.createEl("h1", { text: "Agenda Center" });
     copy.createEl("p", { text: "Every active agenda, directly from your People folder.", cls: "agenda-lede" });
     const actions = header.createDiv({ cls: "agenda-header-actions" });
-    const talk = actions.createEl("button", { text: "Talk to capture", cls: "mod-cta agenda-talk-button" });
+    const talk = actions.createEl("button", { text: "Talk to agendas", cls: "mod-cta agenda-talk-button" });
     const mic = talk.createSpan({ cls: "agenda-button-icon" });
     setIcon(mic, "mic");
-    talk.addEventListener("click", () => this.plugin.openCaptureModal("", this.selected));
+    talk.addEventListener("click", () => this.plugin.openLiveAgenda(() => this.selected));
     const add = actions.createEl("button", { text: "Add agenda item" });
     add.addEventListener("click", () => this.plugin.openCaptureModal("", this.selected));
     const refresh = actions.createEl("button", { text: "Refresh" });
