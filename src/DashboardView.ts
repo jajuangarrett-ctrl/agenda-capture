@@ -2,6 +2,7 @@ import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import type AgendaCapturePlugin from "../main";
 import { getAgendaKind, parseOpenAgendaTasks, type PublishedAgendaMember } from "./publishData";
 import { loadRoster } from "./roster";
+import { completeChecklistItem } from "./markdown";
 
 export const AGENDA_DASHBOARD_VIEW = "fjg-agenda-dashboard";
 
@@ -161,7 +162,22 @@ export class AgendaDashboardView extends ItemView {
       const meta = body.createDiv({ cls: "agenda-item-meta" });
       meta.createSpan({ text: task.category });
       if (task.priority) meta.createSpan({ text: task.priority, cls: "is-priority" });
+      const remove = row.createEl("button", {
+        cls: "agenda-item-remove",
+        attr: { "aria-label": `Remove ${task.title} from this agenda`, title: "Mark complete and remove from agenda" },
+      });
+      setIcon(remove, "check");
+      remove.addEventListener("click", () => void this.completeItem(agenda, task.sourceIndex));
     });
+  }
+
+  private async completeItem(agenda: PublishedAgendaMember, sourceIndex: number): Promise<void> {
+    const path = `${this.plugin.settings.vaultSubfolder}/${agenda.fileName}`;
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) { new Notice("The source agenda file could not be found."); return; }
+    await this.app.vault.process(file, (markdown) => completeChecklistItem(markdown, sourceIndex));
+    new Notice("Agenda item marked complete and removed from the active agenda.");
+    await this.refresh();
   }
 
   private async openSource(agenda: PublishedAgendaMember): Promise<void> {

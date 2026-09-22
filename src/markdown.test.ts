@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { insertBulletAtTop, renderBullet } from "./markdown";
+import { completeChecklistItem, insertBulletAtTop, renderBullet, splitAgendaItems } from "./markdown";
 import type { AgendaItem } from "./types";
 
 describe("renderBullet", () => {
@@ -34,6 +34,24 @@ describe("renderBullet", () => {
   it("renders High Impact priority as #HighImpact", () => {
     expect(renderBullet({ ...base, priority: "High Impact" })).toBe(
       "- [ ] Discuss intake numbers #agenda #HighImpact\n"
+    );
+  });
+});
+
+describe("splitAgendaItems", () => {
+  it("turns a multiline capture into separate clean agenda items", () => {
+    expect(splitAgendaItems("- First topic\n2. Second topic\n\nThird topic")).toEqual([
+      "First topic",
+      "Second topic",
+      "Third topic",
+    ]);
+  });
+});
+
+describe("completeChecklistItem", () => {
+  it("checks only the requested checklist row", () => {
+    expect(completeChecklistItem("- [x] Done\n- [ ] Remove me\n- [ ] Keep me\n", 1)).toBe(
+      "- [x] Done\n- [x] Remove me\n- [ ] Keep me\n"
     );
   });
 });

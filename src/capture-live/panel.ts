@@ -12,10 +12,10 @@ export function settingFields(root: HTMLElement, required: string[]=[]): Capture
   });
 }
 export async function captureKey(app: App, own=''): Promise<string> {
-  if(own.trim())return own;
   const plugin=(app as any).plugins?.plugins?.['fjg-task-manager'];
-  if(plugin?.resolveOpenAiApiKey)return plugin.resolveOpenAiApiKey();
-  try {const data=JSON.parse(await app.vault.adapter.read(`${app.vault.configDir}/plugins/fjg-task-manager/data.json`));return typeof data.openAiApiKey==='string'?data.openAiApiKey:'';}catch{return '';}
+  if(plugin?.resolveOpenAiApiKey){const shared=await plugin.resolveOpenAiApiKey();if(typeof shared==='string'&&shared.trim())return shared.trim();}
+  try {const data=JSON.parse(await app.vault.adapter.read(`${app.vault.configDir}/plugins/fjg-task-manager/data.json`));if(typeof data.openAiApiKey==='string'&&data.openAiApiKey.trim())return data.openAiApiKey.trim();}catch{}
+  return own.trim();
 }
 export class CaptureVoice {
   private session?: CaptureLiveSession;

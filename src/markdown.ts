@@ -1,5 +1,21 @@
 import type { AgendaItem } from "./types";
 
+export function splitAgendaItems(value: string): string[] {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*(?:[-*]|\d+[.)])\s+/, "").trim())
+    .filter(Boolean);
+}
+
+export function completeChecklistItem(markdown: string, checklistIndex: number): string {
+  if (!Number.isInteger(checklistIndex) || checklistIndex < 0) return markdown;
+  let current = -1;
+  return markdown.replace(/^(\s*[-*]\s*\[)([ xX])(\]\s*.*)$/gm, (line, before, state, after) => {
+    current += 1;
+    return current === checklistIndex && state === " " ? `${before}x${after}` : line;
+  });
+}
+
 export function renderBullet(item: AgendaItem): string {
   const tags = ["#agenda"];
   if (item.hashtag) {

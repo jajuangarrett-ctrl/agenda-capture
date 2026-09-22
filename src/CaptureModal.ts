@@ -2,6 +2,7 @@ import { CaptureVoice, captureKey, settingFields } from "./capture-live/panel";
 import { App, ButtonComponent, Modal, Notice, Setting, TFile } from "obsidian";
 import { loadRoster } from "./roster";
 import { appendAgendaItem } from "./append";
+import { splitAgendaItems } from "./markdown";
 import {
   cleanupTranscript,
   startRecording,
@@ -56,6 +57,12 @@ export class CaptureModal extends Modal {
       ? this.initialTeam
       : roster.members.includes(last) ? last : roster.members[0];
 
+    this.voice = new CaptureVoice(contentEl, this.app, "Agenda items — one item per line; multiple items may be prepared in one conversation", {
+      fields: () => settingFields(contentEl, ['Team member', 'Agenda items']),
+      ready: () => !this.closed && !this.busy && !this.recording,
+      save: async () => !!(await this.save(false))
+    }, () => captureKey(this.app, this.plugin.settings.openaiApiKey));
+
     new Setting(contentEl).setName("Team member").addDropdown((d) => {
       roster.members
         .slice()
@@ -68,8 +75,8 @@ export class CaptureModal extends Modal {
     });
 
     new Setting(contentEl)
-      .setName("Item")
-      .setDesc("Tap Record to dictate, or type below. Cleanup runs automatically when both API keys are set.")
+      .setName("Agenda items")
+      .setDesc("Add one item per line. You can dictate several items in one conversation and save them together.")
       .addTextArea((t) => {
         this.textArea = t.inputEl;
         t.inputEl.rows = 4;
@@ -115,12 +122,6 @@ export class CaptureModal extends Modal {
         b.setButtonText("Save & capture another").onClick(() => this.save(true))
       );
 
-    this.voice = new CaptureVoice(contentEl, this.app, "Agenda item", {
-      fields: () => settingFields(contentEl, ['Team member', 'Item']),
-      ready: () => !this.closed && !this.busy && !this.recording,
-      save: async () => !!(await this.save(false))
-    }, () => captureKey(this.app, this.plugin.settings.openaiApiKey));
-
     setTimeout(() => this.textArea?.focus(), 0);
   }
 
@@ -128,8 +129,9 @@ export class CaptureModal extends Modal {
     if (this.busy || this.voice?.active || !this.recordButton) return;
 
     if (!this.recording) {
-      if (!this.plugin.settings.openaiApiKey) {
-        new Notice("Add your OpenAI API key in plugin settings before recording.");
+      const apiKey = await captureKey(this.app, this.plugin.settings.openaiApiKey);
+      if (!apiKey) {
+        new Notice("Add your OpenAI API key in FJG Objective Manager or Agenda Capture settings before recording.");
         return;
       }
       try {
@@ -151,10 +153,8 @@ export class CaptureModal extends Modal {
 
     try {
       const audio = await this.recorder!.stop();
-      let transcript = await transcribeWhisper(
-        audio,
-        this.plugin.settings.openaiApiKey
-      );
+      const apiKey = await captureKey(this.app, this.plugin.settings.openaiApiKey);
+      let transcript = await transcribeWhisper(audio, apiKey);
 
       if (this.plugin.settings.anthropicApiKey && transcript) {
         this.recordButton.setButtonText("Cleaning up...");
@@ -191,21 +191,23 @@ export class CaptureModal extends Modal {
       new Notice("Voice capture still running.");
       return;
     }
-    const text = this.text.trim();
-    if (!text) {
-      new Notice("Add some text before saving.");
+    const items = splitAgendaItems(this.text);
+    if (!items.length) {
+      new Notice("Add at least one agenda item before saving.");
       return;
     }
 
     this.busy = true;
-    let savedPath: string;
+    let savedPath = "";
     try {
-      savedPath = await appendAgendaItem(this.app, this.plugin.settings.vaultSubfolder, {
-        team: this.team,
-        text,
-        priority: this.priority,
-        hashtag: this.hashtag || undefined,
-      });
+      for (const text of [...items].reverse()) {
+        savedPath = await appendAgendaItem(this.app, this.plugin.settings.vaultSubfolder, {
+          team: this.team,
+          text,
+          priority: this.priority,
+          hashtag: this.hashtag || undefined,
+        });
+      }
     } catch (e) {
       this.busy = false;
       new Notice(`Save failed: ${e instanceof Error ? e.message : String(e)}`);
@@ -215,7 +217,7 @@ export class CaptureModal extends Modal {
     this.plugin.settings.lastUsedTeamMember = this.team;
     await this.plugin.saveSettings();
 
-    new Notice(`Saved to ${savedPath}.`);
+    new Notice(items.length === 1 ? `Saved to ${savedPath}.` : `Saved ${items.length} agenda items to ${savedPath}.`);
 
     const reopen = forceAnother || this.plugin.settings.showAnotherAfterSave;
     this.close();
