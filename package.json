@@ -1,6 +1,6 @@
 {
   "name": "agenda-capture",
-  "version": "0.8.2",
+  "version": "0.9.0",
   "description": "View, capture, print, and publish agendas from per-person Markdown files.",
   "main": "main.js",
   "scripts": {

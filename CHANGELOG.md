@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0 — 2026-09-21
+
+- Replace the dashboard's form-filling voice shortcut with an Objective Manager-style conversational agenda controller.
+- Let voice list and read agendas aloud, including item titles, categories, and priorities.
+- Let explicit voice requests add multiple items, rename an item, mark it complete, or permanently delete it.
+- Add revision checks and exact agenda/item identifiers so stale or ambiguous voice edits cannot silently change the wrong item.
+- Refresh the Agenda Center immediately after successful voice writes.
+
 ## 0.8.2 — 2026-09-21
 
 - Let live voice read the currently selected agenda's open Markdown items through a read-only tool.
