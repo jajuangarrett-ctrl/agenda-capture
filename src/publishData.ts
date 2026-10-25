@@ -5,6 +5,8 @@ export interface PublishedAgendaTask {
   priority: "" | "High impact";
   category: string;
   sourceIndex: number;
+  source?: "objective";
+  objectivePath?: string;
   tags?: string[];
   raw?: string;
 }

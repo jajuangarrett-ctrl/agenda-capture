@@ -1,3 +1,4 @@
+import { mergeObjectiveAgendas } from "./objective-agendas";
 import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import type AgendaCapturePlugin from "../main";
 import { getAgendaKind, parseOpenAgendaTasks, type PublishedAgendaMember } from "./publishData";
@@ -47,9 +48,11 @@ export class AgendaDashboardView extends ItemView {
           tasks: parseOpenAgendaTasks(markdown, name),
         });
       }
-      this.agendas = agendas;
-      if (!this.selected || !agendas.some((agenda) => agenda.name === this.selected)) {
-        this.selected = agendas[0]?.name || "";
+      const snapshotFile = this.app.vault.getAbstractFileByPath(`${this.plugin.settings.vaultSubfolder}/_objectives.json`);
+      const snapshot = snapshotFile instanceof TFile ? JSON.parse(await this.app.vault.read(snapshotFile)) : {version:1,objectives:[]};
+      this.agendas = mergeObjectiveAgendas(agendas, snapshot);
+      if (!this.selected || !this.agendas.some((agenda) => agenda.name === this.selected)) {
+        this.selected = this.agendas[0]?.name || "";
       }
       this.render();
     } catch (error) {
@@ -152,6 +155,7 @@ export class AgendaDashboardView extends ItemView {
     setIcon(printIcon, "printer");
     print.addEventListener("click", () => this.printAgenda(agenda));
     const open = actions.createEl("button", { text: "Open source" });
+    open.disabled = !agenda.fileName;
     open.addEventListener("click", () => void this.openSource(agenda));
 
     const preview = panel.createDiv({cls:'agenda-document-preview'});
@@ -159,6 +163,17 @@ export class AgendaDashboardView extends ItemView {
       preview.innerHTML = agendaMarkup(agenda, this.titles.get(agenda.name) || title, this.meetingMonth);
       const rows = preview.querySelectorAll<HTMLElement>('.ag-row');
       agenda.tasks.forEach((task, index) => {
+        if (task.source === 'objective') {
+          const label = rows[index].createSpan({text:'Objective', cls:'ag-objective-label'});
+          label.setAttribute('title', 'Included through Show on agendas in Objective Manager');
+          const open = rows[index].createEl('button', {text:'Open objective', cls:'ag-objective-open', attr:{'aria-label':`Open objective: ${task.title}`}});
+          open.onclick = () => {
+            const file = this.app.vault.getAbstractFileByPath(task.objectivePath || '');
+            if (file instanceof TFile) void this.app.workspace.getLeaf('tab').openFile(file);
+            else new Notice('Objective note not found. Refresh Objective Manager, then Agenda Center.');
+          };
+          return;
+        }
         const remove = rows[index].createEl('button', {cls:'ag-complete', attr:{'aria-label':`Mark complete: ${task.title}`,title:'Mark complete and remove from agenda'}});
         setIcon(remove, 'check');
         remove.onclick = () => void this.completeItem(agenda, task.sourceIndex).catch(error => new Notice(String(error)));

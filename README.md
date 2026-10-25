@@ -128,3 +128,9 @@ Choose **Talk to capture** in the capture window. GPT-Live-1 fills visible field
 Uses the plugin's saved OpenAI key or the existing FJG Objective Manager key. No keys are copied into releases. Touch controls support mobile layouts; update through BRAT on phones that do not sync plugin files. Physical phone microphone/playback verification remains necessary.
 
 The shared implementation is maintained in obsidian-task-manager/apps/obsidian-plugin/src/capture-live and copied into each capture plugin's src/capture-live so each plugin works independently. Keep those copies synchronized when fixing the shared protocol or form tools.
+
+## Objective Manager People integration (0.11.0)
+
+The native Agenda Center reads `_objectives.json` beside its configured agenda Markdown folder. Objective Manager publishes only open objectives explicitly selected with **People → Show on agendas**. Press **Refresh** in Agenda Center after changes (folder modification events also request a refresh). Associated people get the objective alongside their ordinary topics, even without a roster Markdown file. Assigning People alone does not publish an objective.
+
+Objective rows have **Open objective** instead of the Markdown completion action. Complete or deselect the source objective in Objective Manager, then refresh Agenda Center to remove it. Ordinary agenda topics keep their existing completion behavior. Invalid snapshots preserve the previously loaded agendas; missing snapshots remove imported objective rows. Printing includes the same objective titles. Cloud publishing and voice editing retain their existing Markdown scope.
