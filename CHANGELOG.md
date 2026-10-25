@@ -1,3 +1,7 @@
+# 0.11.1
+
+- Show progress and a visible result when manually refreshing Agenda Center, including guidance when no objectives are selected for agendas.
+
 ## 0.11.0 — Objective Manager agendas
 
 Restore People-associated, explicitly selected objectives in the native Agenda Center. Merge the portable Objective Manager snapshot with ordinary Markdown topics, preserve source completion boundaries, and open objectives directly from their agenda row. Repeated refresh deduplicates; completed, archived and deselected objectives disappear. Invalid snapshots keep the previous display.

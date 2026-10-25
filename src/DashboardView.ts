@@ -13,6 +13,7 @@ export class AgendaDashboardView extends ItemView {
   private selected = "";
   private query = "";
   private loading = false;
+  private refreshMessage = "";
   private titles = new Map<string, string>();
   private meetingMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
@@ -28,8 +29,11 @@ export class AgendaDashboardView extends ItemView {
     await this.refresh();
   }
 
-  async refresh(): Promise<void> {
-    if (this.loading) return;
+  async refresh(manual = false): Promise<void> {
+    if (this.loading) {
+      if (manual) new Notice("Agenda refresh is already in progress.");
+      return;
+    }
     this.loading = true;
     try {
       const roster = await loadRoster(this.app, this.plugin.settings.vaultSubfolder);
@@ -54,9 +58,16 @@ export class AgendaDashboardView extends ItemView {
       if (!this.selected || !this.agendas.some((agenda) => agenda.name === this.selected)) {
         this.selected = this.agendas[0]?.name || "";
       }
+      if (manual) {
+        const tasks = this.agendas.flatMap(agenda => agenda.tasks);
+        const objectives = tasks.filter(task => task.source === 'objective').length;
+        this.refreshMessage = `Refreshed ${this.agendas.length} agendas: ${tasks.length - objectives} agenda topics and ${objectives} objective entries. ${objectives === 0 ? 'To include an objective, enable Show on agendas in its People picker and save.' : ''}`.trim();
+        new Notice(this.refreshMessage);
+      }
       this.render();
     } catch (error) {
-      new Notice(`Could not load agendas: ${error instanceof Error ? error.message : String(error)}`);
+      this.refreshMessage = `Could not load agendas: ${error instanceof Error ? error.message : String(error)}`;
+      new Notice(this.refreshMessage);
     } finally {
       this.loading = false;
     }
@@ -94,7 +105,13 @@ export class AgendaDashboardView extends ItemView {
     const add = actions.createEl("button", { text: "Add agenda item" });
     add.addEventListener("click", () => this.plugin.openCaptureModal("", this.selected));
     const refresh = actions.createEl("button", { text: "Refresh" });
-    refresh.addEventListener("click", () => void this.refresh());
+    refresh.addEventListener("click", async () => {
+      refresh.disabled = true;
+      refresh.setText("Refreshing…");
+      try { await this.refresh(true); }
+      finally { refresh.disabled = false; refresh.setText("Refresh"); }
+    });
+    if (this.refreshMessage) copy.createEl("p", { text: this.refreshMessage, cls: "agenda-refresh-status", attr: { role: "status", "aria-live": "polite" } });
   }
 
   private metric(parent: HTMLElement, value: string, label: string): void {
