@@ -115,6 +115,8 @@ npm install
 npm run dev    # esbuild watch mode
 npm run build  # production build (typecheck + minified bundle)
 npm test       # vitest unit tests for markdown surgery
+# With Playwright, Chromium, and pdftotext available, verify actual multi-page PDF output:
+node scripts/verify-print.mjs
 ```
 
 ## License
@@ -133,4 +135,4 @@ The shared implementation is maintained in obsidian-task-manager/apps/obsidian-p
 
 The native Agenda Center reads `_objectives.json` beside its configured agenda Markdown folder. Objective Manager publishes only open objectives explicitly selected with **People → Show on agendas**. Press **Refresh** in Agenda Center after changes (folder modification events also request a refresh). Associated people get the objective alongside their ordinary topics, even without a roster Markdown file. Assigning People alone does not publish an objective.
 
-Objective rows have **Open objective** instead of the Markdown completion action. Complete or deselect the source objective in Objective Manager, then refresh Agenda Center to remove it. Ordinary agenda topics keep their existing completion behavior. Invalid snapshots preserve the previously loaded agendas; missing snapshots remove imported objective rows. Printing includes the same objective titles. Cloud publishing and voice editing retain their existing Markdown scope.
+Objective rows have **Open objective** instead of the Markdown completion action. Complete or deselect the source objective in Objective Manager, then refresh Agenda Center to remove it. Ordinary agenda topics keep their existing completion behavior. Invalid snapshots preserve the previously loaded agendas; missing snapshots remove imported objective rows. Print / Save PDF includes the full agenda, including Objective Manager titles labeled “Objective,” without the on-screen buttons. The device provides its own print or PDF dialog. Cloud publishing and voice editing retain their existing Markdown scope.

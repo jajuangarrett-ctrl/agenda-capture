@@ -1,3 +1,7 @@
+# 0.11.2
+
+- Print the full agenda independently of the on-screen viewport. Let long rows flow across pages and keep Objective Manager items labeled in print.
+
 # 0.11.1
 
 - Show progress and a visible result when manually refreshing Agenda Center, including guidance when no objectives are selected for agendas.
