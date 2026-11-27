@@ -1,6 +1,6 @@
 {
   "name": "agenda-capture",
-  "version": "0.11.2",
+  "version": "0.11.3",
   "description": "View, capture, print, and publish agendas from per-person Markdown files.",
   "main": "main.js",
   "scripts": {
@@ -24,5 +24,8 @@
     "tslib": "2.6.2",
     "typescript": "5.4.5",
     "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "pdf-lib": "1.17.1"
   }
 }

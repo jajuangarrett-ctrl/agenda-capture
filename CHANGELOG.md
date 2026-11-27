@@ -1,3 +1,7 @@
+# 0.11.3
+
+- On mobile, **Save PDF** creates the full Letter-size agenda locally and saves it to **Agenda Exports** inside your agenda folder. Open the file in Obsidian or use **Share / Print** if the device exposes file sharing. Desktop printing is unchanged.
+
 # 0.11.2
 
 - Print the full agenda independently of the on-screen viewport. Let long rows flow across pages and keep Objective Manager items labeled in print.

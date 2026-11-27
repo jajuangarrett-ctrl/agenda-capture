@@ -1,10 +1,12 @@
 import { mergeObjectiveAgendas } from "./objective-agendas";
-import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
+import { ItemView, Notice, Platform, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import type AgendaCapturePlugin from "../main";
 import { getAgendaKind, parseOpenAgendaTasks, type PublishedAgendaMember } from "./publishData";
 import { loadRoster } from "./roster";
 import { agendaMarkup, printAgendaInPlace, AGENDA_DOCUMENT_CSS } from './agenda-template';
 import { editAgendaBlock } from './agenda-document';
+import { buildAgendaPdf } from './agenda-pdf';
+import { saveAgendaPdf } from './agenda-pdf-vault';
 
 export const AGENDA_DASHBOARD_VIEW = "fjg-agenda-dashboard";
 
@@ -167,13 +169,20 @@ export class AgendaDashboardView extends ItemView {
     const dateLabel = copy.createEl('label', {text:'Meeting date'});
     const dateInput = dateLabel.createEl('input', {attr:{'aria-label':'Meeting date'}}); dateInput.value = this.meetingMonth;
     const actions = heading.createDiv({ cls: "agenda-panel-actions" });
-    const print = actions.createEl("button", { text: "Print / Save PDF" });
+    const mobile = Platform.isMobile || Platform.isMobileApp;
+    const print = actions.createEl("button", { text: mobile ? "Save PDF" : "Print / Save PDF" });
     const printIcon = print.createSpan({ cls: "agenda-button-icon" });
-    setIcon(printIcon, "printer");
-    print.addEventListener("click", () => this.printAgenda(agenda));
+    setIcon(printIcon, mobile ? "file-down" : "printer");
     const open = actions.createEl("button", { text: "Open source" });
     open.disabled = !agenda.fileName;
     open.addEventListener("click", () => void this.openSource(agenda));
+    if (mobile) {
+      const result = panel.createDiv({cls: 'agenda-pdf-result'});
+      result.hidden = true;
+      print.addEventListener('click', () => void this.exportPdf(agenda, print, result));
+    } else {
+      print.addEventListener('click', () => this.printAgenda(agenda));
+    }
 
     const preview = panel.createDiv({cls:'agenda-document-preview'});
     const renderPreview = () => {
@@ -217,6 +226,42 @@ export class AgendaDashboardView extends ItemView {
     const path = `${this.plugin.settings.vaultSubfolder}/${agenda.fileName}`;
     const file = this.app.vault.getAbstractFileByPath(path);
     if (file instanceof TFile) await this.app.workspace.getLeaf("tab").openFile(file);
+  }
+
+  private async exportPdf(agenda: PublishedAgendaMember, button: HTMLButtonElement, result: HTMLElement): Promise<void> {
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    result.hidden = false;
+    result.empty();
+    const status = result.createEl('p', {text: 'Creating PDF…', attr: {role: 'status'}});
+    const title = this.titles.get(agenda.name) || (agenda.name === 'SSS Team' ? 'Department Meeting Agenda' : `${agenda.name} Meeting Agenda`);
+    const date = this.meetingMonth;
+    const agendaFolder = this.plugin.settings.vaultSubfolder;
+    try {
+      const bytes = await buildAgendaPdf(button.ownerDocument, agenda, title, date);
+      const file = await saveAgendaPdf(this.app.vault, agendaFolder, title, date, bytes);
+      status.setText(`Saved: ${file.path}`);
+      const actions = result.createDiv({cls: 'agenda-panel-actions'});
+      actions.createEl('button', {text: 'Open PDF'}).onclick = () => {
+        void this.app.workspace.getLeaf('tab').openFile(file).catch(() => new Notice(`PDF saved. Open it from ${file.path}.`));
+      };
+      try {
+        const nav = button.ownerDocument.defaultView?.navigator;
+        const options = {files: [new File([bytes], file.name, {type: 'application/pdf'})]};
+        if (nav && typeof nav.share === 'function' && nav.canShare?.(options)) {
+          actions.createEl('button', {text: 'Share / Print'}).onclick = () => {
+            void nav.share(options).catch(error => {
+              if (error?.name !== 'AbortError') new Notice('The share sheet could not open. Your PDF is saved.');
+            });
+          };
+        }
+      } catch { /* The saved PDF is available even without file sharing. */ }
+    } catch (error) {
+      status.setText(`Could not save the PDF: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+    }
   }
 
   private printAgenda(agenda: PublishedAgendaMember): void {
